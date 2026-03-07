@@ -1,0 +1,191 @@
+{
+  "name": "jjvs",
+  "displayName": "Jujutsu for VSCode",
+  "description": "Feature-rich Jujutsu (jj) version control integration for VSCode and Cursor",
+  "version": "0.0.1",
+  "publisher": "jjvs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jjvs/jjvs"
+  },
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "jujutsu",
+    "jj",
+    "version control",
+    "scm",
+    "vcs"
+  ],
+  "activationEvents": [
+    "workspaceContains:.jj"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jjvs",
+          "title": "Jujutsu",
+          "icon": "$(source-control)"
+        }
+      ]
+    },
+    "views": {
+      "jjvs": [
+        {
+          "id": "jjvs.revisions",
+          "name": "Revisions",
+          "when": "jjvs:hasRepository"
+        },
+        {
+          "id": "jjvs.bookmarks",
+          "name": "Bookmarks",
+          "when": "jjvs:hasRepository"
+        },
+        {
+          "id": "jjvs.oplog",
+          "name": "Operation Log",
+          "when": "jjvs:hasRepository"
+        }
+      ],
+      "scm": [
+        {
+          "id": "jjvs.details",
+          "name": "Jujutsu Details",
+          "when": "jjvs:hasRepository"
+        }
+      ]
+    },
+    "commands": [],
+    "menus": {},
+    "configuration": {
+      "title": "Jujutsu for VSCode",
+      "properties": {
+        "jjvs.jjPath": {
+          "type": "string",
+          "default": "jj",
+          "description": "Path to the jj binary. Defaults to 'jj' (resolved via PATH).",
+          "scope": "machine-overridable"
+        },
+        "jjvs.logLevel": {
+          "type": "string",
+          "enum": ["off", "error", "warn", "info", "debug", "trace"],
+          "default": "info",
+          "description": "Verbosity level for the Jujutsu output channel.",
+          "scope": "window"
+        },
+        "jjvs.revset": {
+          "type": "string",
+          "default": "",
+          "description": "Default revset expression for the revision log. Leave empty to use jj's default.",
+          "scope": "resource"
+        },
+        "jjvs.logTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "Custom jj log template. When set, overrides the built-in JSON template. For advanced use only.",
+          "scope": "resource"
+        },
+        "jjvs.logLimit": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Maximum number of revisions to load per batch in the revision log.",
+          "scope": "resource"
+        },
+        "jjvs.oplogLimit": {
+          "type": "number",
+          "default": 200,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Maximum number of operations to show in the operation log.",
+          "scope": "resource"
+        },
+        "jjvs.git.defaultRemote": {
+          "type": "string",
+          "default": "origin",
+          "description": "Default remote name for git push/fetch operations. Only relevant for colocated jj+git repositories.",
+          "scope": "resource"
+        },
+        "jjvs.preview.position": {
+          "type": "string",
+          "enum": ["auto", "beside", "below"],
+          "default": "auto",
+          "description": "Position of the preview panel showing jj show/diff output.",
+          "scope": "window"
+        },
+        "jjvs.preview.showOnStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open the preview panel when the extension activates.",
+          "scope": "window"
+        },
+        "jjvs.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh views when jj repository state changes.",
+          "scope": "resource"
+        },
+        "jjvs.autoRefreshInterval": {
+          "type": "number",
+          "default": 3000,
+          "minimum": 500,
+          "description": "Polling fallback interval in milliseconds for auto-refresh when file watching is unavailable.",
+          "scope": "resource"
+        },
+        "jjvs.graphStyle": {
+          "type": "string",
+          "enum": ["text", "webview"],
+          "default": "text",
+          "enumDescriptions": [
+            "Show the revision graph as text characters in the tree view (fast, always available)",
+            "Show the revision graph as an interactive graphical webview (richer, requires more resources)"
+          ],
+          "description": "Rendering style for the revision graph.",
+          "scope": "window"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs --production",
+    "build:watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:integration": "node ./node_modules/@vscode/test-cli/bin/vscode-test",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@vscode/vsce-sign", "keytar"]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.105.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "esbuild-svelte": "^0.9.0",
+    "prettier": "^3.0.0",
+    "svelte": "^5.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}

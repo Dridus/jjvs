@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // Modern TypeScript for bundler-based projects (esbuild handles actual module resolution)
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    // Strict type checking
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Output (used for type checking; esbuild handles actual compilation)
+    "outDir": "out",
+    "sourceMap": true,
+    "declaration": false,
+
+    // Interop
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": false,
+
+    // Ensure imports work correctly
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "out", "webview-ui", "test"]
+}

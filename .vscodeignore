@@ -1,0 +1,51 @@
+# Source – bundled by esbuild into dist/
+src/
+webview-ui/
+
+# Tests
+test/
+
+# Dev tooling
+esbuild.mjs
+eslint.config.mjs
+vitest.config.ts
+tsconfig.json
+.prettierrc
+.eslintignore
+.editorconfig
+
+# Nix
+flake.nix
+flake.lock
+.envrc
+
+# Package manager artifacts
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+
+# Build intermediates
+out/
+
+# VCS
+.git/
+.jj/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+
+# CI
+.github/
+
+# Docs (include README.md and LICENSE, exclude others)
+CLAUDE.md
+CONTRIBUTING.md
+CHANGELOG.md
+
+# Always include
+!dist/
+!README.md
+!LICENSE
+!package.json

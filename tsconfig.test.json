@@ -1,0 +1,12 @@
+{
+  // Extends the main tsconfig so tests share the same strict settings,
+  // but includes test/ files (excluded from the main tsconfig to keep
+  // the extension build clean) and adds types needed for test code.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "out-test",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist", "out", "webview-ui"]
+}

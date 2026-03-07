@@ -1,0 +1,34 @@
+# Build output
+dist/
+out/
+
+# Node.js
+node_modules/
+.pnpm-store/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test output
+coverage/
+.nyc_output/
+
+# Editor
+.vscode/settings.json
+.vscode/*.code-workspace
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Nix
+.direnv/
+result
+result-*
+
+# Extension packaging
+*.vsix
+
+# Environment
+.env
+.env.local
