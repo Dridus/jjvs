@@ -1,0 +1,46 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseDiffStat > matches snapshot 1`] = `
+[
+  {
+    "addedLines": 1074,
+    "path": "src/core/jj-cli.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 283,
+    "path": "src/core/jj-runner.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 172,
+    "path": "src/core/result.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 274,
+    "path": "src/core/types.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 626,
+    "path": "test/unit/jj-cli.test.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 193,
+    "path": "test/unit/jj-runner.test.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 121,
+    "path": "test/unit/jj-version.test.ts",
+    "removedLines": 0,
+  },
+  {
+    "addedLines": 232,
+    "path": "test/unit/result.test.ts",
+    "removedLines": 0,
+  },
+]
+`;

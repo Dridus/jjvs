@@ -4,27 +4,30 @@
  * Extension entry point. Handles activation and deactivation lifecycle.
  *
  * On activation:
- *   1. Check jj binary availability and minimum version
- *   2. Initialize the output channel and logging
- *   3. Set up repository discovery (RepositoryManager) — Phase 4
- *   4. Register all views, commands, and providers — Phases 5-14
+ *   1. Create output channel and logger
+ *   2. Read configuration via ConfigService
+ *   3. Verify jj binary is available and meets the minimum version requirement
+ *   4. Initialize RepositoryManager and file watchers
+ *   5. Register all views, commands, and providers — Phases 5-14
  *
  * Each phase builds on this foundation. Stubs are left in place (commented out)
  * to show where later phases plug in.
  */
 
 import * as vscode from 'vscode';
-
-// Phase 4+: these imports will be uncommented as phases are implemented
-// import { RepositoryManager } from '../core/repository-manager.js';
-// import { JjCliImpl } from '../core/jj-cli.js';
-// import { ConfigService } from './config.js';
-// import { OutputChannelLogger } from './output-channel.js';
-// import { FileWatcher } from './file-watcher.js';
-// import { CommandService } from './commands/registry.js';
-
-/** Minimum jj version required for json() template support. */
-const MIN_JJ_VERSION = '0.25.0';
+import { JjRunnerImpl } from '../core/jj-runner';
+import { JjCliImpl } from '../core/jj-cli';
+import {
+  meetsMinimumVersion,
+  formatVersion,
+  getCapabilities,
+  MINIMUM_JJ_VERSION,
+  type JjCapabilities,
+} from '../core/jj-version';
+import { RepositoryManager } from '../core/repository-manager';
+import { ConfigService } from './config';
+import { OutputChannelLogger } from './output-channel';
+import { FileWatcher } from './file-watcher';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -34,43 +37,205 @@ const EXTENSION_ID = 'jjvs';
  * or a jjvs command is invoked).
  */
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const outputChannel = vscode.window.createOutputChannel('Jujutsu', { log: true });
-  context.subscriptions.push(outputChannel);
+  // ── 1. Output channel ────────────────────────────────────────────────────
 
-  outputChannel.info(`jjvs activating (extension version ${getExtensionVersion(context)})`);
+  const rawChannel = vscode.window.createOutputChannel('Jujutsu', { log: true });
+  context.subscriptions.push(rawChannel);
 
-  // Verify jj is available and meets the minimum version requirement.
-  // Later phases replace this with a proper JjRunner + JjVersionChecker.
-  const jjAvailable = await checkJjAvailable(outputChannel);
-  if (!jjAvailable) {
-    // Do not block activation — the extension degrades gracefully without jj.
-    // Views will show an appropriate "jj not found" message.
-    outputChannel.warn(
-      `jj binary not found. Install jj >= ${MIN_JJ_VERSION} and ensure it is on your PATH, ` +
-        `or configure the path via the 'jjvs.jjPath' setting.`,
-    );
-    void vscode.window.showWarningMessage(
-      `Jujutsu for VSCode: jj binary not found. ` +
-        `Please install jj >= ${MIN_JJ_VERSION} or set jjvs.jjPath.`,
-      'Open Settings',
-    ).then((choice) => {
-      if (choice === 'Open Settings') {
-        void vscode.commands.executeCommand('workbench.action.openSettings', 'jjvs.jjPath');
-      }
-    });
+  const configService = new ConfigService();
+  context.subscriptions.push(configService);
+
+  const logger = new OutputChannelLogger(rawChannel);
+
+  logger.info(`jjvs activating (extension version ${getExtensionVersion(context)})`);
+
+  // ── 2. jj binary and version check ───────────────────────────────────────
+
+  // Use a temporary JjCli (no repo root needed for --version) to go through
+  // the same Result/JjError path as all other jj commands rather than having
+  // a parallel raw execFile code path.
+  const jjPath = configService.jjPath;
+  const versionCli = new JjCliImpl(
+    new JjRunnerImpl({ jjPath, workingDirectory: process.cwd() }),
+  );
+  const versionResult = await versionCli.version();
+
+  /** Capability flags derived from the detected jj version. Null if jj not found. */
+  let capabilities: JjCapabilities | null = null;
+
+  if (!versionResult.ok) {
+    const errorKind = versionResult.error.kind;
+    if (errorKind === 'not-found') {
+      logger.warn(
+        `jj binary not found at '${jjPath}'. ` +
+          `Install jj >= ${formatVersion(MINIMUM_JJ_VERSION)} and ensure it is on your PATH, ` +
+          `or configure the path via 'jjvs.jjPath'.`,
+      );
+      void vscode.window
+        .showWarningMessage(
+          `Jujutsu for VSCode: jj binary not found. ` +
+            `Please install jj >= ${formatVersion(MINIMUM_JJ_VERSION)} or set jjvs.jjPath.`,
+          'Open Settings',
+        )
+        .then((choice) => {
+          if (choice === 'Open Settings') {
+            void vscode.commands.executeCommand('workbench.action.openSettings', 'jjvs.jjPath');
+          }
+        });
+    } else {
+      logger.warn(`jj version check failed: ${versionResult.error.message}`);
+    }
+    // Degrade gracefully — extension still activates, views show "jj not found"
+  } else {
+    const version = versionResult.value;
+    if (!meetsMinimumVersion(version)) {
+      logger.warn(
+        `jj version ${version.raw} is below the minimum required ` +
+          `${formatVersion(MINIMUM_JJ_VERSION)}. Some features may not be available.`,
+      );
+      void vscode.window.showWarningMessage(
+        `Jujutsu for VSCode: jj ${version.raw} is below the minimum required ` +
+          `${formatVersion(MINIMUM_JJ_VERSION)}. Please upgrade jj.`,
+      );
+    } else {
+      logger.info(`Found jj ${version.raw}`);
+    }
+    capabilities = getCapabilities(version);
+    logger.debug('jj capabilities', capabilities);
   }
 
-  // Set initial context keys so views render correctly even before full initialization.
+  // ── 3. Set initial context keys ──────────────────────────────────────────
+
   await setContextKey('hasRepository', false);
   await setContextKey('isColocated', false);
   await setContextKey('hasConflicts', false);
   await setContextKey('revisionSelected', false);
   await setContextKey('fileSelected', false);
 
-  // Phase 4: initialize RepositoryManager, ConfigService, FileWatcher, OutputChannelLogger
+  // ── 4. Repository manager and file watchers ──────────────────────────────
+
+  const repositoryManager = new RepositoryManager(
+    (rootPath) =>
+      new JjCliImpl(
+        new JjRunnerImpl({
+          jjPath: configService.jjPath,
+          workingDirectory: rootPath,
+        }),
+      ),
+    configService.getRepositoryConfig(),
+  );
+  context.subscriptions.push(repositoryManager);
+
+  // Track file watchers per repository root so they can be disposed when a
+  // repository is removed from the workspace.
+  const fileWatchers = new Map<string, FileWatcher>();
+
+  const syncFileWatchers = (): void => {
+    const repoRoots = new Set(repositoryManager.repositories.map((r) => r.rootPath));
+
+    // Add watchers for new repositories
+    for (const repo of repositoryManager.repositories) {
+      if (!fileWatchers.has(repo.rootPath)) {
+        const watcher = new FileWatcher(
+          repo.rootPath,
+          configService.getAutoRefreshInterval(),
+        );
+        watcher.onDidChange(() => {
+          if (configService.getAutoRefresh()) {
+            // Phase 7a: call watcher.suppressNextChange() before jjvs-initiated
+            // jj commands so that the file watcher doesn't trigger a redundant
+            // refresh on top of the explicit post-command refresh.
+            repo.scheduleRefresh();
+          }
+        });
+        fileWatchers.set(repo.rootPath, watcher);
+        logger.debug(`File watcher started for ${repo.rootPath}`);
+      }
+    }
+
+    // Remove watchers for repositories that are no longer managed
+    for (const [rootPath, watcher] of fileWatchers) {
+      if (!repoRoots.has(rootPath)) {
+        watcher.dispose();
+        fileWatchers.delete(rootPath);
+        logger.debug(`File watcher stopped for ${rootPath}`);
+      }
+    }
+  };
+
+  // Update context keys when repositories change.
+  // hasConflicts is derived from the most recently refreshed repo state.
+  repositoryManager.onDidChangeRepositories(() => {
+    const repos = repositoryManager.repositories;
+    void setContextKey('hasRepository', repos.length > 0);
+    void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
+    updateConflictContextKey();
+    syncFileWatchers();
+  });
+
+  /** Re-evaluate hasConflicts across all known repositories. */
+  const updateConflictContextKey = (): void => {
+    const hasConflicts = repositoryManager.repositories.some(
+      (r) => r.workingCopyStatus?.hasConflicts === true,
+    );
+    void setContextKey('hasConflicts', hasConflicts);
+  };
+
+  // Dispose all watchers when the extension deactivates
+  context.subscriptions.push({
+    dispose: () => {
+      for (const watcher of fileWatchers.values()) {
+        watcher.dispose();
+      }
+      fileWatchers.clear();
+    },
+  });
+
+  // Propagate setting changes to the repository manager. If revset or logLimit
+  // change, rebuild the config and trigger a refresh so views reflect the new
+  // settings immediately without requiring a reload.
+  context.subscriptions.push(
+    configService.onDidChangeConfig(() => {
+      // The factory closure reads jjPath afresh on each repo creation, so
+      // new repos will pick up a changed jjPath automatically. For existing
+      // repos, a simple refresh is sufficient since they re-read jjPath via
+      // the runner config at construction time.
+      const newConfig = configService.getRepositoryConfig();
+      logger.debug('Configuration changed — refreshing repositories', newConfig);
+      for (const repo of repositoryManager.repositories) {
+        void repo.refresh();
+      }
+    }),
+  );
+
+  // Discover repositories in the current workspace
+  const workspacePaths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+  await repositoryManager.updateWorkspacePaths(workspacePaths);
+  syncFileWatchers();
+
+  // Subscribe to each repo's change events so hasConflicts stays current.
+  for (const repo of repositoryManager.repositories) {
+    context.subscriptions.push(
+      repo.onDidChange(() => updateConflictContextKey()),
+    );
+  }
+
+  // Re-discover when workspace folders change
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(async (e) => {
+      logger.debug('Workspace folders changed', {
+        added: e.added.map((f) => f.uri.fsPath),
+        removed: e.removed.map((f) => f.uri.fsPath),
+      });
+      const paths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+      await repositoryManager.updateWorkspacePaths(paths);
+      syncFileWatchers();
+    }),
+  );
+
   // Phase 5: register SCM provider
   // Phase 6: register revision tree view and revset completion
-  // Phase 7: register revision commands
+  // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)
   // Phase 8: register conflict handling
   // Phase 9: register rebase command
   // Phase 10: register bookmarks tree and git commands
@@ -79,7 +244,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Phase 13: register preview panel
   // Phase 14: register graph webview
 
-  outputChannel.info(`jjvs activated`);
+  // Expose capabilities so later phases can gate features at registration time.
+  // Usage: `if (capabilities?.hasJsonTemplate) { ... }`
+  void capabilities; // referenced by later phases; suppress unused-variable lint
+
+  const repoCount = repositoryManager.repositories.length;
+  logger.info(
+    `jjvs activated — found ${repoCount} jj ${repoCount === 1 ? 'repository' : 'repositories'}`,
+  );
 }
 
 /** Called by VSCode when the extension deactivates (workspace closed, extension disabled, etc.). */
@@ -88,17 +260,16 @@ export function deactivate(): void {
   // so VSCode cleans them up automatically. Nothing to do here explicitly.
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 /**
  * Returns the extension version from package.json.
+ *
+ * Safe: `packageJSON` is typed as `{ readonly [key: string]: unknown }` by @types/vscode,
+ * but the VSCode extension host always bundles package.json and guarantees `version`
+ * is a string per the extension manifest schema.
  */
 function getExtensionVersion(context: vscode.ExtensionContext): string {
-  // safe: @types/vscode types packageJSON as { readonly [key: string]: unknown }, so indexing
-  // produces `unknown`. The VS Code extension host guarantees `version` is a string per the
-  // package.json schema (https://code.visualstudio.com/api/references/extension-manifest).
   const version = context.extension.packageJSON['version'] as string | undefined;
   return version ?? 'unknown';
 }
@@ -109,39 +280,4 @@ function getExtensionVersion(context: vscode.ExtensionContext): string {
  */
 async function setContextKey(key: string, value: unknown): Promise<void> {
   await vscode.commands.executeCommand('setContext', `${EXTENSION_ID}:${key}`, value);
-}
-
-/**
- * Checks whether the jj binary is available and logs its version.
- *
- * This is a lightweight pre-check using Node's child_process directly,
- * before the full JjRunner infrastructure is initialized in Phase 2.
- *
- * Returns true if jj is available, false otherwise.
- */
-async function checkJjAvailable(outputChannel: vscode.LogOutputChannel): Promise<boolean> {
-  const config = vscode.workspace.getConfiguration('jjvs');
-  const jjPath = config.get<string>('jjPath') ?? 'jj';
-
-  return new Promise((resolve) => {
-    // Dynamic import of child_process to avoid issues in browser extension hosts.
-    // (jjvs is a desktop-only extension, but defensive import is good practice.)
-    import('child_process').then(({ execFile }) => {
-      execFile(jjPath, ['--version'], { timeout: 5000 }, (error, stdout) => {
-        if (error) {
-          resolve(false);
-          return;
-        }
-
-        const version = stdout.trim();
-        outputChannel.info(`Found: ${version} (at '${jjPath}')`);
-
-        // Phase 2b: replace this with JjVersionChecker.checkMinimumVersion()
-        // which parses the version string and compares against MIN_JJ_VERSION.
-        resolve(true);
-      });
-    }).catch(() => {
-      resolve(false);
-    });
-  });
 }

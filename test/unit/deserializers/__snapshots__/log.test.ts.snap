@@ -1,0 +1,64 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseRevisions > matches snapshot 1`] = `
+[
+  {
+    "author": {
+      "email": "rmm+github@z.odi.ac",
+      "name": "Ross MacLeod",
+      "timestamp": 2026-03-07T21:44:32.000Z,
+    },
+    "changeId": "kqxqutopsoptvlrmpmuurzkkpkwuzomw",
+    "commitId": "a68175449fd1c7762ae03df7a93d84ee88d1d8bd",
+    "committer": {
+      "email": "rmm+github@z.odi.ac",
+      "name": "Ross MacLeod",
+      "timestamp": 2026-03-07T22:52:29.000Z,
+    },
+    "description": "",
+    "hasConflict": false,
+    "isDivergent": false,
+    "isEmpty": false,
+    "isImmutable": false,
+    "isWorkingCopy": true,
+    "localBookmarks": [],
+    "parentChangeIds": [
+      "ytzyotyoxopqnowsxnqqpyysrmmmnrqx",
+    ],
+    "parentCommitIds": [
+      "1111e484af0843a4db7c6d6b849b1b22044b40cc",
+    ],
+    "remoteBookmarks": [],
+    "tags": [],
+  },
+  {
+    "author": {
+      "email": "rmm+github@z.odi.ac",
+      "name": "Ross MacLeod",
+      "timestamp": 2026-03-07T20:50:29.000Z,
+    },
+    "changeId": "ytzyotyoxopqnowsxnqqpyysrmmmnrqx",
+    "commitId": "1111e484af0843a4db7c6d6b849b1b22044b40cc",
+    "committer": {
+      "email": "rmm+github@z.odi.ac",
+      "name": "Ross MacLeod",
+      "timestamp": 2026-03-07T21:07:23.000Z,
+    },
+    "description": "phase 1",
+    "hasConflict": false,
+    "isDivergent": false,
+    "isEmpty": false,
+    "isImmutable": false,
+    "isWorkingCopy": false,
+    "localBookmarks": [],
+    "parentChangeIds": [
+      "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+    ],
+    "parentCommitIds": [
+      "0000000000000000000000000000000000000000",
+    ],
+    "remoteBookmarks": [],
+    "tags": [],
+  },
+]
+`;

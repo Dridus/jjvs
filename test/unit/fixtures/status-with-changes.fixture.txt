@@ -1,0 +1,8 @@
+Working copy changes:
+A src/core/jj-runner.ts
+A src/core/result.ts
+A src/core/types.ts
+M README.md
+D old-file.txt
+Working copy  (@) : kqxqutop a6817544 (no description set)
+Parent commit (@-): ytzyotyo 1111e484 phase 1

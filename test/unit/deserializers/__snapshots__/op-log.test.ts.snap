@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseOperations > matches snapshot 1`] = `
+[
+  {
+    "description": "snapshot working copy",
+    "id": "97a5b6e30985b26ed419dc67220d42ce1eaa140fe0a5000439beda76b81adc19b507ecce50ff16acd728a287ae0b926fd93cfc34a783ffc313d03d825af32e6b",
+    "time": {
+      "end": 2026-03-07T22:52:29.902Z,
+      "start": 2026-03-07T22:52:29.889Z,
+    },
+    "user": "ross@Enodia.local",
+  },
+  {
+    "description": "snapshot working copy",
+    "id": "8bea28f14f3798490e4f3f25394e0175460512fb07e8fa6cce46b924560b8d3a0aa37c6f05d36caaebd9d5b3650a58f1ac342635f4aa0cbd701715e98f1c135d",
+    "time": {
+      "end": 2026-03-07T22:52:24.763Z,
+      "start": 2026-03-07T22:52:24.752Z,
+    },
+    "user": "ross@Enodia.local",
+  },
+]
+`;

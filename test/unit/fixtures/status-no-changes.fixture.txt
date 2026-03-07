@@ -1,0 +1,3 @@
+The working copy has no changes.
+Working copy  (@) : kqxqutop 043a6555 (empty) (no description set)
+Parent commit (@-): ytzyotyo 1111e484 phase 1

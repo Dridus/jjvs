@@ -1,0 +1,6 @@
+Working copy changes:
+M src/conflict.ts
+Conflicted files:
+  src/conflict.ts
+Working copy  (@) : abcdefgh 12345678 fix the conflict
+Parent commit (@-): stuvwxyz 87654321 parent
