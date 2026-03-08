@@ -1,5 +1,5 @@
 /**
- * Git command implementations for Phase 10b.
+ * Git command implementations.
  *
  * Commands: git.push, git.fetch.
  *

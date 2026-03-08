@@ -92,6 +92,7 @@ import { GraphWebviewProvider } from './webview/graph/provider';
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
 
+
 /**
  * Called by VSCode when the extension activates (workspace contains .jj,
  * or a jjvs command is invoked).
@@ -231,9 +232,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         );
         watcher.onDidChange(() => {
           if (configService.getAutoRefresh()) {
-            // Phase 7a: call watcher.suppressNextChange() before jjvs-initiated
-            // jj commands so that the file watcher doesn't trigger a redundant
-            // refresh on top of the explicit post-command refresh.
+            // CommandService calls watcher.suppressNextChange() before each
+            // jjvs-initiated jj command to prevent a redundant refresh on top
+            // of the explicit post-command refresh.
             repo.scheduleRefresh();
           }
         });
@@ -454,9 +455,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  // Phase 5: SCM provider registered above (decorationProvider + syncSCMProviders)
-  // Phase 8: ConflictStatusBar and updateConflictStatusBar defined above (before onDidChange wiring)
-
   context.subscriptions.push(
     vscode.commands.registerCommand('jjvs.refresh', () => {
       for (const repo of repositoryManager.repositories) {
@@ -507,8 +505,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(revisionTreeProvider);
 
   // Declared here so the revision selection handler (registered below) can
-  // propagate selections to the details view (Phase 12a) and evolution log view
-  // (Phase 12b) without a circular dependency. Assigned in their respective sections.
+  // propagate selections to the details view and evolution log view without a
+  // circular dependency. Assigned in their respective sections below.
   let detailsTreeProvider: DetailsTreeProvider | undefined = undefined;
   let evologTreeProvider: EvologTreeProvider | undefined = undefined;
 
@@ -524,7 +522,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       revset !== '' ? `filter: ${revset}` : undefined;
   };
 
-  // Set the active repository from the first discovered repo (Phase 6a: single repo).
+  // Set the active repository from the first discovered repo (single-repo display).
   // When repositories change, update the provider so the view stays current.
   const syncRevisionTree = (): void => {
     const repos = repositoryManager.repositories;
@@ -539,16 +537,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(revisionTreeView);
 
   // Update the revisionSelected context key when the tree selection changes,
-  // and propagate the selected revision to the details view (Phase 12).
+  // and propagate the selected revision to the details and evolution log views.
   context.subscriptions.push(
     revisionTreeView.onDidChangeSelection((e) => {
       const selected = e.selection[0];
       const isRevisionItem = selected instanceof RevisionTreeItem;
       void setContextKey('revisionSelected', isRevisionItem);
 
-      // Propagate selection to the details view (Phase 12a) and evolution log
-      // view (Phase 12b). Both providers are assigned below; optional-chain
-      // guards handle the brief window before they are set.
+      // Propagate selection to the details view and evolution log view. Both
+      // providers are assigned below; optional-chain guards handle the brief
+      // window before they are set.
       const selectedRevision = isRevisionItem ? selected.revision : null;
       const activeRepo = repositoryManager.repositories[0] ?? null;
       detailsTreeProvider?.setRevision(selectedRevision, activeRepo);
@@ -666,12 +664,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerRevertRevisionCommand(getActiveCommandContext, revisionTreeView),
   );
 
-  // Phase 8: conflict handling
   context.subscriptions.push(
     registerResolveConflictCommand(getActiveCommandContext, revisionTreeView, configService.jjPath),
   );
 
-  // Phase 9: rebase command
   context.subscriptions.push(registerRebaseCommand(getActiveCommandContext, revisionTreeView));
 
   // ── 10a. Bookmarks tree view ───────────────────────────────────────────────

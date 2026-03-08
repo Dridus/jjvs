@@ -15,7 +15,7 @@
  * the revision's position in the DAG, similar to `jj log --graph` output.
  *
  * Full connection lines between rows (├─╮, ╰─╯ etc.) require inter-row
- * "filler" items and are deferred to the Graph Webview (Phase 14).
+ * "filler" items and are rendered by the Graph Webview instead.
  *
  * Note: this module has no `vscode` imports so it can be tested with vitest.
  */

@@ -20,9 +20,9 @@
  *
  * ## Multi-repo
  *
- * For Phase 6a/6b, the provider displays the revisions of a single repository.
- * The active repository is set via `setRepository()`. If no repository has
- * been set, the tree is empty.
+ * The provider displays the revisions of a single repository. The active
+ * repository is set via `setRepository()`. If no repository has been set,
+ * the tree is empty.
  */
 
 import * as vscode from 'vscode';

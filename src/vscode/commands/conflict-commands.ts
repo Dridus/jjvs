@@ -1,5 +1,5 @@
 /**
- * Conflict command implementations for Phase 8.
+ * Conflict command implementations.
  *
  * Commands: `jjvs.conflict.resolve`
  *

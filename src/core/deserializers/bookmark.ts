@@ -1,24 +1,14 @@
 /**
  * Bookmark data extraction from revision log output.
  *
- * ## Current approach (Phase 3): log-based
- *
- * `jj bookmark list` supports `-T` templates (CommitRef type), but its JSON
- * serialisation format has not been verified against a real repository with
- * bookmarks. Until Phase 10 (bookmarks tree view) tests against a repository
- * that has bookmarks, this module derives bookmark data from `jj log` output,
- * which is already fully typed and tested.
- *
- * The log-based approach queries `jj log -r 'bookmarks() | remote_bookmarks()'`
+ * Uses a log-based approach: `jj log -r 'bookmarks() | remote_bookmarks()'`
  * and collects the `localBookmarks`/`remoteBookmarks` arrays from each revision.
  *
- * ## Future approach (Phase 10)
- *
- * `jj bookmark list --all-remotes -T <template>` using CommitRef template fields
- * (`name`, `remote`, `added_targets`, `tracking_ahead_count`, etc.).
- * The migration will only change `JjCli.bookmarkList()` internals; the return
- * type `BookmarkListResult` and the domain types `LocalBookmark`/`RemoteBookmark`
- * will not change.
+ * `jj bookmark list` also supports `-T` templates (CommitRef type), but the
+ * log-based approach was chosen because it reuses the already fully-typed and
+ * tested log deserializer. A future enhancement could migrate `JjCli.bookmarkList()`
+ * to direct `jj bookmark list -T` parsing without changing `BookmarkListResult` or
+ * the domain types `LocalBookmark`/`RemoteBookmark`.
  */
 
 import type { LocalBookmark, RemoteBookmark, Revision } from '../types';
@@ -50,7 +40,7 @@ export function extractBookmarksFromRevisions(
 
 /**
  * Extract just local bookmark names from revisions.
- * Useful for revset completion (Phase 6b).
+ * Useful for revset completion.
  */
 export function extractLocalBookmarkNames(revisions: readonly Revision[]): readonly string[] {
   return revisions.flatMap((r) => r.localBookmarks.map((b) => b.name));

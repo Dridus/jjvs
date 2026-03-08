@@ -1,5 +1,5 @@
 /**
- * Rebase command implementation for Phase 9.
+ * Rebase command implementation.
  *
  * Multi-step QuickPick flow:
  *   1. Resolve the source revision (tree selection or revision picker)

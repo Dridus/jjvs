@@ -1,5 +1,5 @@
 /**
- * Operation log command implementations for Phase 11.
+ * Operation log command implementations.
  *
  * Commands: oplog.undo, oplog.restore.
  *

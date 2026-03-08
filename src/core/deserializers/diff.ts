@@ -13,8 +13,8 @@
  * modified files, counts are APPROXIMATE (derived from the bar proportions).
  *
  * For exact per-file add/remove counts, use the `diff.stat().files()` template
- * API (Phase 11a will add a dedicated `JjCli.revisionFileStat()` method using
- * `DiffStatEntry.lines_added()` / `.lines_removed()`).
+ * API via a dedicated `JjCli.revisionFileStat()` method using
+ * `DiffStatEntry.lines_added()` / `.lines_removed()`.
  *
  * Verified against jj 0.38.0 on 2026-03-07.
  * Fixture: test/unit/fixtures/diff-stat.fixture.txt

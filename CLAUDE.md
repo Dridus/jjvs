@@ -327,7 +327,7 @@ different reader needs and must not be mixed within a single document.
 - **Plain Markdown, no build step.** Documentation is plain `.md` files. No static site
   generator is required. The structure supports adding one later without reorganizing content.
 - **No future tense for unshipped features.** If a page references a feature not yet
-  implemented, omit that section entirely (use `<!-- TODO(phase-N): add section on X -->`
+  implemented, omit that section entirely (use `<!-- TODO: add section on X -->`
   as a placeholder that won't render for readers).
 
 ---
@@ -409,7 +409,7 @@ time and is significantly slower.
 4. When adding a new VSCode contribution (command, view, menu item): update `package.json`
    contribution points → implement the handler → register in extension activation.
    All three steps must happen together.
-5. Never leave `// TODO` without a phase reference (e.g., `// TODO(phase-7b): implement split`).
+5. Never leave `// TODO` without a tracking issue or brief description of the deferred work.
 
 ### After completing a phase
 

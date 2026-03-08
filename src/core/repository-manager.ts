@@ -152,7 +152,7 @@ export class RepositoryManager implements Disposable {
  * Find jj repository roots within the given workspace paths.
  *
  * Each path that contains a `.jj/` subdirectory is treated as a repository root.
- * Paths without `.jj/` are skipped (no upward traversal in Phase 4).
+ * Paths without `.jj/` are skipped — no upward traversal is performed.
  */
 export function discoverJjRoots(workspacePaths: readonly string[]): string[] {
   const roots: string[] = [];

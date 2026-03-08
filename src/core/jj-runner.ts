@@ -10,9 +10,9 @@
  * `JjRunner` is an interface so tests can inject mock implementations without
  * spawning real processes. The concrete `JjRunnerImpl` is used in production.
  *
- * Phase 4 will wrap `JjRunnerImpl` with a suppression guard that silences file
- * watcher events during extension-initiated commands to prevent feedback loops.
- * The runner interface is intentionally clean of that concern.
+ * The suppression guard that silences file watcher events during
+ * extension-initiated commands lives in `FileWatcher` (VSCode layer), keeping
+ * this interface clean of that concern.
  */
 
 import { spawn } from 'child_process';
@@ -81,8 +81,7 @@ export interface JjRunnerConfig {
  * Interface for running raw jj CLI commands.
  *
  * The interface exists to allow test doubles (mocks/stubs) without spawning
- * real processes. `JjCli` (Phase 2b) depends on this interface, not the
- * concrete class.
+ * real processes. `JjCli` depends on this interface, not the concrete class.
  */
 export interface JjRunner {
   /** The working directory this runner is associated with (repository root). */

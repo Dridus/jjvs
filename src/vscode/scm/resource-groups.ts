@@ -60,8 +60,8 @@ function fileStatusDecorations(status: FileStatus): vscode.SourceControlResource
  * `SourceControlResourceState` suitable for display in the SCM panel.
  *
  * The `resourceUri` points to the file in the working tree so that VSCode
- * can open the file when the user clicks on it. Diff-on-click will be wired
- * to a `QuickDiffProvider` command in Phase 5b and Phase 7.
+ * can open the file when the user clicks on it. Diff-on-click is wired to
+ * the `JjQuickDiffProvider`.
  */
 export function fileChangeToResourceState(
   rootPath: string,
@@ -72,8 +72,8 @@ export function fileChangeToResourceState(
   return {
     resourceUri,
     decorations: fileStatusDecorations(change.status),
-    // contextValue drives when-clause conditions in package.json menus.
-    // Phase 7 adds context menu commands gated on this value (e.g., "restore file").
+    // contextValue drives when-clause conditions in package.json menus
+    // (e.g., "restore file" is gated on this value).
     contextValue: change.status,
   };
 }

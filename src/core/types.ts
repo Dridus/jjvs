@@ -44,8 +44,7 @@ export type FileStatus =
    * A file that participates in an unresolved merge conflict.
    * Currently not produced by any deserializer — `jj status` reports
    * conflicted files without a distinct single-character status code.
-   * Reserved for future use when a structured conflict-file API is available
-   * (Phase 8 conflict handling).
+   * Reserved for future use when a structured conflict-file API is available.
    */
   | 'conflicted';
 

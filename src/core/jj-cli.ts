@@ -292,7 +292,6 @@ export interface JjCli {
   /**
    * List all bookmarks (local and remote).
    * Uses `jj log` under the hood for structured output.
-   * Phase 3 will migrate to `jj bookmark list -T <json-template>`.
    */
   bookmarkList(options?: BookmarkListOptions): Promise<Result<BookmarkListResult, JjError>>;
 
@@ -503,7 +502,8 @@ export class JjCliImpl implements JjCli {
     options?: BookmarkListOptions,
   ): Promise<Result<BookmarkListResult, JjError>> {
     // Uses jj log to extract bookmark data in structured form (log-based approach).
-    // Phase 10 will replace this with direct `jj bookmark list -T` parsing using CommitRef fields.
+    // A future enhancement could migrate to direct `jj bookmark list -T` parsing
+    // using CommitRef fields without changing the BookmarkListResult return type.
     const revset = options?.allRemotes
       ? 'bookmarks() | remote_bookmarks()'
       : 'bookmarks()';

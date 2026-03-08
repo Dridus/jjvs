@@ -1,5 +1,5 @@
 /**
- * File-level command implementations for Phase 12b.
+ * File-level command implementations.
  *
  * Commands operate on individual files within a revision, invoked from the
  * context menu of the Jujutsu Details view (jjvs.details).

@@ -1,5 +1,5 @@
 /**
- * Bookmark command implementations for Phase 10a.
+ * Bookmark command implementations.
  *
  * Commands: bookmark.create, bookmark.move, bookmark.delete,
  *           bookmark.forget, bookmark.track, bookmark.untrack.

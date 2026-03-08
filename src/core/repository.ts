@@ -14,15 +14,15 @@
  * - Read commands (`jj log`, `jj status`) are launched concurrently with
  *   `Promise.all()` to minimise latency.
  *
- * - Mutating commands (Phase 7+) acquire a per-repository command lock via
- *   the `withMutation()` guard, which prevents concurrent mutation and
- *   triggers a refresh on completion.
+ * - Mutating commands acquire a per-repository command lock via the
+ *   `withMutation()` guard, which prevents concurrent mutation and triggers a
+ *   refresh on completion.
  *
  * ## Relationship to other components
  *
  * - `RepositoryState` is created and owned by `RepositoryManager`.
  * - `FileWatcher` (VSCode layer) calls `scheduleRefresh()` on `op_heads/` changes.
- * - `CommandService` (Phase 7) uses `withMutation()` to serialize commands.
+ * - `CommandService` uses `withMutation()` to serialize commands.
  */
 
 import type { JjCli, DescribeOptions } from './jj-cli';
@@ -192,8 +192,8 @@ export class RepositoryState implements Disposable {
   /**
    * Set the description of a revision.
    *
-   * Delegates to `JjCli.describe`. Phase 7 will wrap this and other mutation
-   * methods in a `withMutation()` command-lock guard.
+   * Delegates to `JjCli.describe`. Mutation commands are serialized via
+   * `CommandService.withMutation()`.
    */
   describe(options: DescribeOptions): Promise<Result<void, JjError>> {
     return this.cli.describe(options);

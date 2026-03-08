@@ -1,5 +1,5 @@
 /**
- * Revision command implementations for Phase 7a.
+ * Revision command implementations.
  *
  * Commands: new, edit, abandon, describe (inline + editor), duplicate.
  *

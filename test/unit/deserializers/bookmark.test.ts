@@ -1,9 +1,8 @@
 /**
  * Tests for src/core/deserializers/bookmark.ts
  *
- * The bookmark deserializer uses a log-based approach for Phase 3: bookmarks
- * are extracted from Revision objects returned by `jj log`. Direct
- * `jj bookmark list -T` parsing is deferred to Phase 10.
+ * The bookmark deserializer uses a log-based approach: bookmarks are extracted
+ * from Revision objects returned by `jj log`.
  */
 
 import { describe, it, expect } from 'vitest';

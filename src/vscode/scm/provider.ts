@@ -10,7 +10,7 @@
  * - Drive the shared `JjFileDecorationProvider` with current file statuses
  * - Provide inline gutter diffs via `JjQuickDiffProvider`
  * - Wire the SCM input box to `jj describe` via `acceptInputCommand`
- * - Expose `isColocated` so Phase 10b can conditionally show git commands
+ * - Expose `isColocated` so git commands can be conditionally shown
  */
 
 import * as vscode from 'vscode';
@@ -87,7 +87,7 @@ export class JjvsSCMProvider implements vscode.Disposable {
 
   /**
    * Whether the underlying repository is a colocated jj+git repository.
-   * Used by Phase 10b to conditionally enable git push/fetch commands.
+   * Used to conditionally enable git push/fetch commands.
    */
   get isColocated(): boolean {
     return this.repository.kind === 'colocated';
