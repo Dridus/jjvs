@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 7b.
+Commands are verified against `package.json` contribution points as of Phase 8.
 
 ---
 
@@ -311,6 +311,35 @@ Context menu: visible on all revision items
 Equivalent to: `jj revert -r <changeId> --onto @`
 
 For usage details, see [Revisions guide — Reverting a revision](../guides/revisions.md#reverting-a-revision).
+
+---
+
+## jjvs.conflict.resolve
+
+**Title**: Resolve Conflicts...  
+**Category**: Jujutsu  
+**Icon**: `$(tools)`  
+**Enablement**: `jjvs:hasConflicts`
+
+Opens an integrated terminal and runs `jj resolve -r <changeId>` to launch the
+configured merge tool for a conflicted revision. After the terminal session ends,
+the repository view refreshes automatically.
+
+**Resolution flow:**
+
+1. If a conflicted revision is selected in the Revisions view, it is used directly.
+2. If only one conflicted revision exists in the current view, it is selected
+   automatically.
+3. If multiple conflicted revisions exist, a picker appears to let you choose.
+
+Context menu: visible on conflicted revision items (`viewItem =~ /conflict/`)
+
+Default keybinding (Revisions view focused, conflicts exist): `R`
+
+Equivalent to: `jj resolve -r <changeId>`
+
+For details on the full conflict resolution workflow, see
+[Conflicts guide](../guides/conflicts.md).
 
 ---
 

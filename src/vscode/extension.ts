@@ -49,6 +49,8 @@ import {
   registerAbsorbCommand,
   registerRevertRevisionCommand,
 } from './commands/revision-commands';
+import { registerResolveConflictCommand } from './commands/conflict-commands';
+import { ConflictStatusBar } from './status-bar';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -264,27 +266,49 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
   });
 
-  // Update context keys when repositories change.
-  // hasConflicts is derived from the most recently refreshed repo state.
+  /**
+   * Re-evaluate `jjvs:hasConflicts` across all known repositories.
+   *
+   * Checks `revision.hasConflict` on every revision in the current log view,
+   * not just the working copy. This ensures the context key (and the `R`
+   * keybinding that depends on it) activates for any conflicted revision in
+   * the tree, whether or not it is currently checked out.
+   */
+  const updateConflictContextKey = (): void => {
+    const hasConflicts = repositoryManager.repositories.some((r) =>
+      r.revisions.some((rev) => rev.hasConflict),
+    );
+    void setContextKey('hasConflicts', hasConflicts);
+  };
+
+  // ── 8. Conflict status bar ────────────────────────────────────────────────
+
+  const conflictStatusBar = new ConflictStatusBar();
+  context.subscriptions.push(conflictStatusBar);
+
+  /** Update the conflict count badge from the current revision list. */
+  const updateConflictStatusBar = (): void => {
+    const repo = repositoryManager.repositories[0];
+    if (repo === undefined) {
+      conflictStatusBar.clear();
+      return;
+    }
+    conflictStatusBar.update(repo.revisions);
+  };
+
+  // Update context keys and status bar when repositories are added or removed.
   context.subscriptions.push(
     repositoryManager.onDidChangeRepositories(() => {
       const repos = repositoryManager.repositories;
       void setContextKey('hasRepository', repos.length > 0);
       void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
       updateConflictContextKey();
+      updateConflictStatusBar();
       syncFileWatchers();
       syncCommandServices();
       syncSCMProviders();
     }),
   );
-
-  /** Re-evaluate hasConflicts across all known repositories. */
-  const updateConflictContextKey = (): void => {
-    const hasConflicts = repositoryManager.repositories.some(
-      (r) => r.workingCopyStatus?.hasConflicts === true,
-    );
-    void setContextKey('hasConflicts', hasConflicts);
-  };
 
   // Dispose all watchers when the extension deactivates
   context.subscriptions.push({
@@ -320,10 +344,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   syncCommandServices();
   syncSCMProviders();
 
-  // Subscribe to each repo's change events so hasConflicts stays current.
+  // Subscribe to each repo's change events so hasConflicts and status bar stay current.
   for (const repo of repositoryManager.repositories) {
     context.subscriptions.push(
-      repo.onDidChange(() => updateConflictContextKey()),
+      repo.onDidChange(() => {
+        updateConflictContextKey();
+        updateConflictStatusBar();
+      }),
     );
   }
 
@@ -343,6 +370,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
 
   // Phase 5: SCM provider registered above (decorationProvider + syncSCMProviders)
+  // Phase 8: ConflictStatusBar and updateConflictStatusBar defined above (before onDidChange wiring)
 
   context.subscriptions.push(
     vscode.commands.registerCommand('jjvs.refresh', () => {
@@ -545,7 +573,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerRevertRevisionCommand(getActiveCommandContext, revisionTreeView),
   );
 
-  // Phase 8: register conflict handling
+  // Phase 8: conflict handling
+  context.subscriptions.push(
+    registerResolveConflictCommand(getActiveCommandContext, revisionTreeView, configService.jjPath),
+  );
+
   // Phase 9: register rebase command
   // Phase 10: register bookmarks tree and git commands
   // Phase 11: register op log tree and undo/redo

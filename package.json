@@ -172,6 +172,13 @@
         "category": "Jujutsu",
         "icon": "$(history)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.conflict.resolve",
+        "title": "Resolve Conflicts...",
+        "category": "Jujutsu",
+        "icon": "$(tools)",
+        "enablement": "jjvs:hasConflicts"
       }
     ],
     "menus": {
@@ -256,6 +263,11 @@
           "group": "3_destructive@2"
         },
         {
+          "command": "jjvs.conflict.resolve",
+          "when": "view == jjvs.revisions && viewItem =~ /conflict/",
+          "group": "1_primary@3"
+        },
+        {
           "command": "jjvs.revision.copyChangeId",
           "when": "view == jjvs.revisions && viewItem =~ /^revision/",
           "group": "9_copy@1"
@@ -297,6 +309,11 @@
         "key": "a",
         "command": "jjvs.revision.absorb",
         "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository"
+      },
+      {
+        "key": "r",
+        "command": "jjvs.conflict.resolve",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasConflicts"
       }
     ],
     "configuration": {
