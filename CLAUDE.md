@@ -88,6 +88,13 @@ The file watcher ignores FS events during extension-initiated jj commands to pre
 feedback loops. This is **not optional** — every code path that invokes jj must use
 the suppression guard.
 
+### Terminal commands are a shell surface
+
+`terminal.sendText()` sends text to a shell interpreter, unlike `spawn()` which bypasses
+the shell. Any value interpolated into a `sendText` call must be shell-escaped. Use the
+`shellQuote` utility (`src/vscode/shell-quote.ts`) for paths and identifiers. Never
+interpolate user-provided free-form text into `sendText`.
+
 ---
 
 ## TypeScript Rules
@@ -114,6 +121,12 @@ the suppression guard.
   feature requires a jj version newer than the user's installed version, disable that feature
   with an explanatory message rather than erroring.
 
+- **Validate external data at trust boundaries.** Data from external processes
+  (jj CLI output, configuration files, webview messages) must be validated before
+  use. Use zod/mini schemas to validate JSON-parsed data; do not rely on `as T`
+  type assertions alone. When validation fails, degrade gracefully (skip the
+  malformed record, log a warning) rather than propagating undefined field accesses.
+
 - **Cancellation is first-class.** Long-running jj commands must support cancellation via
   `AbortController`. The runner, CLI layer, and CommandService all propagate cancellation.
   A cancelled command is not an error — it must produce no side effects and no user-visible
@@ -137,6 +150,12 @@ repository** via a command queue owned by `CommandService`.
 - If a user triggers an interactive command while another is running, show
   "A jj operation is in progress" rather than queuing it.
 - Never fire-and-forget multiple commands concurrently against the same repository.
+
+**v1 implementation note:** The current `CommandService` serializes mutating commands only.
+Read-only queries (`jj log`, `jj status`, `jj diff`) run independently and rely on jj's own
+workspace locking for safety. A future enhancement could add read/write awareness to avoid
+stale reads during mutations, but jj's locking makes this a correctness-of-display issue,
+not a data-integrity issue.
 
 ---
 

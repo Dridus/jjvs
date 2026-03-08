@@ -4,49 +4,49 @@ overview: A prioritized review of the jjvs codebase across security, correctness
 todos:
   - id: fix-deserializer-robustness
     content: Add zod/mini runtime schema validation in log.ts and op-log.ts deserializers; fix misleading comments (Issues 1.1, 4.1)
-    status: in_progress
+    status: completed
   - id: fix-sendtext-injection
     content: Shell-escape jjPath in conflict-commands.ts sendText call; add CLAUDE.md terminal safety principle (Issues 1.2, A)
-    status: pending
+    status: completed
   - id: add-claudemd-validation-principle
     content: Add deserialization validation guidance to CLAUDE.md (Issue 1.3)
-    status: pending
+    status: completed
   - id: add-pnpm-audit-ci
     content: Add pnpm audit to CI pipeline (Issue 1.4)
-    status: pending
+    status: completed
   - id: fix-scm-describe-commandservice
     content: Route SCM executeDescribe through CommandService (Issue 2.1)
-    status: pending
+    status: completed
   - id: fix-revset-debounce
     content: Add 300ms debounce to revset input (Issue 2.2)
-    status: pending
+    status: completed
   - id: fix-graph-subscription-leak
     content: Track and dispose graph repo subscriptions on workspace change (Issue 2.3)
-    status: pending
+    status: completed
   - id: fix-conflict-listener-dispose
     content: Add conflict terminal listener to context.subscriptions (Issue 2.4)
-    status: pending
+    status: completed
   - id: fix-as-assertions
     content: Add instanceof guards or safety comments to as assertions in extension.ts (Issue 2.5)
-    status: pending
+    status: completed
   - id: fix-async-stat
     content: Replace fs.statSync with async stat in file-watcher.ts polling (Issue 3.1)
-    status: pending
+    status: completed
   - id: implement-rw-serialization
     content: Document or implement read/write command serialization (Issue 3.2)
-    status: pending
+    status: completed
   - id: decompose-graph-svelte
     content: Extract graph App.svelte into sub-components (Issue 3.3) -- recommend Opus-class model for this item
     status: completed
   - id: fix-packaging-exclusions
     content: Add docs/ and coverage/ to .vscodeignore (Issues 4.3, 4.4)
-    status: pending
+    status: completed
   - id: fix-readme-stale-text
     content: Remove stale phase references from README.md; update publisher/repo URL in package.json (Issues 4.5, 4.6, D)
-    status: pending
+    status: completed
   - id: add-snapshot-tests
     content: Add snapshot tests for status and bookmark deserializers (Issue 4.2)
-    status: pending
+    status: completed
 isProject: false
 ---
 

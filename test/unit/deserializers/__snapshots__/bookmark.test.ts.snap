@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`extractBookmarksFromRevisions snapshots > single revision with local and remote bookmarks matches snapshot 1`] = `
+{
+  "localBookmarks": [
+    {
+      "name": "main",
+      "targets": [
+        "main-commit",
+      ],
+    },
+    {
+      "name": "feature",
+      "targets": [
+        "feature-commit",
+      ],
+    },
+  ],
+  "remoteBookmarks": [
+    {
+      "name": "main",
+      "remote": "origin",
+      "targets": [
+        "main-commit",
+      ],
+      "trackingTargets": [
+        "main-commit",
+      ],
+    },
+    {
+      "name": "feature",
+      "remote": "upstream",
+      "targets": [
+        "feature-commit",
+      ],
+      "trackingTargets": [
+        "feature-commit",
+      ],
+    },
+  ],
+}
+`;

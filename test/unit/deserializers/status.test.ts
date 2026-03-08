@@ -114,6 +114,22 @@ describe('parseStatus with conflicts', () => {
   });
 });
 
+// ─── parseStatus — snapshots ──────────────────────────────────────────────────
+
+describe('parseStatus snapshots', () => {
+  it('with-changes fixture matches snapshot', () => {
+    expect(parseStatus(WITH_CHANGES)).toMatchSnapshot();
+  });
+
+  it('no-changes fixture matches snapshot', () => {
+    expect(parseStatus(NO_CHANGES)).toMatchSnapshot();
+  });
+
+  it('conflicts fixture matches snapshot', () => {
+    expect(parseStatus(WITH_CONFLICTS)).toMatchSnapshot();
+  });
+});
+
 // ─── parseStatus — edge cases ─────────────────────────────────────────────────
 
 describe('parseStatus edge cases', () => {

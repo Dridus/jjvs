@@ -116,6 +116,21 @@ describe('extractBookmarksFromRevisions', () => {
   });
 });
 
+// ── extractBookmarksFromRevisions — snapshots ─────────────────────────────────
+
+describe('extractBookmarksFromRevisions snapshots', () => {
+  it('single revision with local and remote bookmarks matches snapshot', () => {
+    const revisions = [
+      makeRevision(
+        'abc',
+        [makeLocalBookmark('main'), makeLocalBookmark('feature')],
+        [makeRemoteBookmark('main', 'origin'), makeRemoteBookmark('feature', 'upstream')],
+      ),
+    ];
+    expect(extractBookmarksFromRevisions(revisions)).toMatchSnapshot();
+  });
+});
+
 // ── extractLocalBookmarkNames ─────────────────────────────────────────────────
 
 describe('extractLocalBookmarkNames', () => {

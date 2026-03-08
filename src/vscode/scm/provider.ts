@@ -11,10 +11,6 @@
  * - Provide inline gutter diffs via `JjQuickDiffProvider`
  * - Wire the SCM input box to `jj describe` via `acceptInputCommand`
  * - Expose `isColocated` so Phase 10b can conditionally show git commands
- *
- * ## Deferred to later phases
- * - Open-diff command wired to resource state click (Phase 7)
- * - Command serialization via CommandService (Phase 7)
  */
 
 import * as vscode from 'vscode';
@@ -24,6 +20,7 @@ import { fileChangeToResourceState } from './resource-groups';
 import type { JjFileDecorationProvider } from './decorations';
 import { JjQuickDiffProvider } from './quick-diff';
 import { DisposableStore } from '../disposable-store';
+import type { CommandService } from '../commands/command-service';
 
 /**
  * Per-repository SCM provider bridging `RepositoryState` to VSCode's Source
@@ -47,6 +44,7 @@ export class JjvsSCMProvider implements vscode.Disposable {
     private readonly repository: RepositoryState,
     private readonly decorationProvider: JjFileDecorationProvider,
     private readonly logger: Logger,
+    private readonly commandService: CommandService,
   ) {
     this.sourceControl = vscode.scm.createSourceControl(
       'jjvs',
@@ -148,28 +146,24 @@ export class JjvsSCMProvider implements vscode.Disposable {
    * `sourceControl.acceptInputCommand`. The command is triggered when the user
    * clicks the ✓ button or presses Ctrl+Enter in the SCM input box.
    *
-   * On success: clears the input box and triggers a repository refresh.
-   * On failure: shows an error notification and logs to the output channel.
+   * Runs through `CommandService` to get file-watcher suppression, error display,
+   * and post-command refresh for free.
    */
   async executeDescribe(): Promise<void> {
     const text = this.sourceControl.inputBox.value.trim();
     if (text === '') return;
 
-    const result = await this.repository.describe({ description: text });
+    const success = await this.commandService.run(
+      { title: 'Describe working copy' },
+      async (signal) => this.repository.describe({ description: text, signal }),
+    );
 
-    if (!result.ok) {
-      this.logger.error(
-        `jj describe failed for ${this.repository.rootPath}: ${result.error.message}`,
-      );
-      void vscode.window.showErrorMessage(`Jujutsu: ${result.error.message}`);
-      return;
+    if (success) {
+      // Clear the box and suppress the next auto-population so the empty state
+      // is visible, giving the user feedback that describe succeeded.
+      this._suppressNextInputUpdate = true;
+      this.sourceControl.inputBox.value = '';
     }
-
-    // Clear the box and suppress the next auto-population so the empty state
-    // is visible, giving the user feedback that describe succeeded.
-    this._suppressNextInputUpdate = true;
-    this.sourceControl.inputBox.value = '';
-    void this.repository.refresh();
   }
 
   dispose(): void {

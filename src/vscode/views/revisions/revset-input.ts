@@ -258,10 +258,15 @@ export async function openRevsetInput(
 
   refreshItems(quickPick.value);
 
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
   quickPick.onDidChangeValue((newValue) => {
     // Guard against re-entrant updates triggered by programmatic value changes.
     if (isUpdatingValue) return;
-    refreshItems(newValue);
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      refreshItems(newValue);
+    }, 300);
   });
 
   // ── Resolve the promise when the user makes a decision ────────────────────
@@ -302,6 +307,7 @@ export async function openRevsetInput(
     });
 
     quickPick.onDidHide(() => {
+      clearTimeout(debounceTimer);
       resolve(null);
     });
 

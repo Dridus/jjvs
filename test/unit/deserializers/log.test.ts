@@ -174,6 +174,12 @@ describe('parseRevisions', () => {
     expect(revisions).toHaveLength(2); // only the 2 valid lines
   });
 
+  it('skips lines with valid JSON but wrong schema shape (graceful degradation)', () => {
+    const withBadSchema = FIXTURE_NDJSON + '\n{"changeId":123,"commitId":true}\n';
+    const revisions = parseRevisions(withBadSchema);
+    expect(revisions).toHaveLength(2); // schema validation rejects the malformed entry
+  });
+
   it('matches snapshot', () => {
     const revisions = parseRevisions(FIXTURE_NDJSON);
     // Snapshot ensures we detect any unintended changes to the deserializer output.

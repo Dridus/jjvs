@@ -27,7 +27,7 @@ the feature depth of [jjui](https://github.com/idursun/jjui) while using VSCode'
 - **Rebase** — multi-step interactive rebase with source/target/position selection
 - **Git integration** — push and fetch for colocated jj+git repositories
 - **Preview panel** — live `jj show` and `jj diff` output with ANSI color rendering
-- **Revision graph** — interactive graphical DAG with drag-and-drop rebase (coming in Phase 14)
+- **Revision graph** — interactive graphical DAG with drag-and-drop rebase
 
 ## Requirements
 
@@ -128,7 +128,7 @@ pnpm package
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. *(Coming in Phase 15)*
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Attribution
 

@@ -1,0 +1,57 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseStatus snapshots > conflicts fixture matches snapshot 1`] = `
+{
+  "fileChanges": [
+    {
+      "path": "src/conflict.ts",
+      "status": "modified",
+    },
+  ],
+  "hasConflicts": true,
+  "parentChangeIds": [
+    "stuvwxyz",
+  ],
+}
+`;
+
+exports[`parseStatus snapshots > no-changes fixture matches snapshot 1`] = `
+{
+  "fileChanges": [],
+  "hasConflicts": false,
+  "parentChangeIds": [
+    "ytzyotyo",
+  ],
+}
+`;
+
+exports[`parseStatus snapshots > with-changes fixture matches snapshot 1`] = `
+{
+  "fileChanges": [
+    {
+      "path": "src/core/jj-runner.ts",
+      "status": "added",
+    },
+    {
+      "path": "src/core/result.ts",
+      "status": "added",
+    },
+    {
+      "path": "src/core/types.ts",
+      "status": "added",
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+    },
+    {
+      "path": "old-file.txt",
+      "status": "deleted",
+    },
+  ],
+  "hasConflicts": false,
+  "parentChangeIds": [
+    "ytzyotyo",
+  ],
+}
+`;

@@ -26,6 +26,7 @@ import type { Revision } from '../../core/types';
 import type { CommandService } from './command-service';
 import { RevisionTreeItem, type LoadMoreTreeItem } from '../views/revisions/tree-items';
 import { pickRevision } from '../pickers/revision-picker';
+import { shellQuote } from '../shell-quote';
 
 // ─── Context type ─────────────────────────────────────────────────────────────
 
@@ -34,6 +35,8 @@ export interface ConflictCommandContext {
   readonly service: CommandService;
   readonly cli: JjCli;
   readonly repository: RepositoryState;
+  /** Disposables created during command execution are pushed here so they are cleaned up on deactivation. */
+  readonly disposables: vscode.Disposable[];
 }
 
 // ─── Shared helper ─────────────────────────────────────────────────────────────
@@ -136,7 +139,8 @@ export function registerResolveConflictCommand(
       });
 
       // Step 3: Send the resolve command and show the terminal.
-      terminal.sendText(`${jjPath} resolve -r ${shortId}`);
+      // shellQuote guards against jjPath values that contain spaces or special chars.
+      terminal.sendText(`${shellQuote(jjPath)} resolve -r ${shortId}`);
       terminal.show();
 
       // Step 4: Refresh the repository when the terminal session ends so that
@@ -147,6 +151,7 @@ export function registerResolveConflictCommand(
           void ctx.repository.refresh();
         }
       });
+      ctx.disposables.push(closeListener);
     },
   );
 }

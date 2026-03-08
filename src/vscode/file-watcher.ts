@@ -120,25 +120,29 @@ export class FileWatcher implements Disposable {
    *
    * Fires `onDidChange` if the directory mtime has advanced since the last poll.
    * This handles file systems where native events are unreliable.
+   *
+   * Uses async stat to avoid blocking the event loop during polling.
    */
   private pollForChanges(): void {
     const opHeadsPath = path.join(this.rootPath, '.jj', 'op_heads');
-    try {
-      const stat = fs.statSync(opHeadsPath);
-      const mtime = stat.mtimeMs;
-      if (mtime > this._lastModTime) {
-        const previous = this._lastModTime;
-        this._lastModTime = mtime;
-        // Skip the very first poll to avoid a spurious refresh on startup.
-        // `previous === 0` means this is the initial observation; just record
-        // the current mtime as a baseline without firing a change event.
-        if (previous !== 0) {
-          this.handleChange();
+    fs.promises.stat(opHeadsPath).then(
+      (stat) => {
+        const mtime = stat.mtimeMs;
+        if (mtime > this._lastModTime) {
+          const previous = this._lastModTime;
+          this._lastModTime = mtime;
+          // Skip the very first poll to avoid a spurious refresh on startup.
+          // `previous === 0` means this is the initial observation; just record
+          // the current mtime as a baseline without firing a change event.
+          if (previous !== 0) {
+            this.handleChange();
+          }
         }
-      }
-    } catch {
-      // op_heads/ may not exist if this is not a valid jj repo root — ignore
-    }
+      },
+      () => {
+        // op_heads/ may not exist if this is not a valid jj repo root — ignore
+      },
+    );
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────

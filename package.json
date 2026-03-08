@@ -3,11 +3,11 @@
   "displayName": "Jujutsu for VSCode",
   "description": "Feature-rich Jujutsu (jj) version control integration for VSCode and Cursor",
   "version": "0.0.1",
-  "publisher": "jjvs",
+  "publisher": "dridus",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jjvs/jjvs"
+    "url": "https://github.com/Dridus/jjvs"
   },
   "engines": {
     "vscode": "^1.105.0"
@@ -714,7 +714,10 @@
       "esbuild",
       "@vscode/vsce-sign",
       "keytar"
-    ]
+    ],
+    "overrides": {
+      "serialize-javascript": ">=7.0.4"
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -731,5 +734,8 @@
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0",
     "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
   }
 }

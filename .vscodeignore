@@ -50,6 +50,9 @@ scripts/
 CLAUDE.md
 CONTRIBUTING.md
 CHANGELOG.md
+docs/
+coverage/
+.nyc_output/
 
 # Always include
 !dist/

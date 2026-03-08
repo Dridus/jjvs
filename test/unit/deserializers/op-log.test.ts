@@ -97,6 +97,12 @@ describe('parseOperations', () => {
     expect(ops).toHaveLength(2);
   });
 
+  it('skips lines with valid JSON but wrong schema shape (graceful degradation)', () => {
+    const withBadSchema = FIXTURE_NDJSON + '\n{"id":42,"description":null}\n';
+    const ops = parseOperations(withBadSchema);
+    expect(ops).toHaveLength(2); // schema validation rejects the malformed entry
+  });
+
   it('matches snapshot', () => {
     const ops = parseOperations(FIXTURE_NDJSON);
     expect(ops).toMatchSnapshot();

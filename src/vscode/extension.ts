@@ -29,6 +29,7 @@ import { RepositoryManager } from '../core/repository-manager';
 import { ConfigService } from './config';
 import { OutputChannelLogger } from './output-channel';
 import { FileWatcher } from './file-watcher';
+import { DisposableStore } from './disposable-store';
 import { JjFileDecorationProvider } from './scm/decorations';
 import { JjvsSCMProvider } from './scm/provider';
 import {
@@ -37,7 +38,7 @@ import {
   buildOriginalUri,
 } from './scm/quick-diff';
 import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
-import type { RevisionTreeItem } from './views/revisions/tree-items';
+import { RevisionTreeItem } from './views/revisions/tree-items';
 import { RevsetSessionHistory, openRevsetInput } from './views/revisions/revset-input';
 import { CommandService } from './commands/command-service';
 import {
@@ -307,7 +308,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     for (const repo of repositoryManager.repositories) {
       if (!scmProviders.has(repo.rootPath)) {
-        const provider = new JjvsSCMProvider(repo, decorationProvider, logger);
+        const service = commandServices.get(repo.rootPath);
+        if (service === undefined) return;
+        const provider = new JjvsSCMProvider(repo, decorationProvider, logger, service);
         scmProviders.set(repo.rootPath, provider);
         logger.debug(`SCM provider registered for ${repo.rootPath}`);
       }
@@ -540,14 +543,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     revisionTreeView.onDidChangeSelection((e) => {
       const selected = e.selection[0];
-      const isRevisionItem =
-        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
+      const isRevisionItem = selected instanceof RevisionTreeItem;
       void setContextKey('revisionSelected', isRevisionItem);
 
       // Propagate selection to the details view (Phase 12a) and evolution log
       // view (Phase 12b). Both providers are assigned below; optional-chain
       // guards handle the brief window before they are set.
-      const selectedRevision = isRevisionItem ? (selected as RevisionTreeItem).revision : null;
+      const selectedRevision = isRevisionItem ? selected.revision : null;
       const activeRepo = repositoryManager.repositories[0] ?? null;
       detailsTreeProvider?.setRevision(selectedRevision, activeRepo);
       evologTreeProvider?.setRevision(selectedRevision, activeRepo);
@@ -574,13 +576,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand('jjvs.revision.copyChangeId', () => {
       const selected = revisionTreeView.selection[0];
-      if (selected === undefined || !('revision' in selected)) return;
-      // safe: the 'revision' in selected guard above confirms this is a RevisionTreeItem;
-      // TypeScript does not narrow class-instance union types via the `in` operator alone.
-      const item = selected as RevisionTreeItem;
-      void vscode.env.clipboard.writeText(item.revision.changeId).then(() => {
+      if (!(selected instanceof RevisionTreeItem)) return;
+      void vscode.env.clipboard.writeText(selected.revision.changeId).then(() => {
         void vscode.window.showInformationMessage(
-          `Copied change ID: ${item.revision.changeId.substring(0, 12)}`,
+          `Copied change ID: ${selected.revision.changeId.substring(0, 12)}`,
         );
       });
     }),
@@ -589,13 +588,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand('jjvs.revision.copyCommitId', () => {
       const selected = revisionTreeView.selection[0];
-      if (selected === undefined || !('revision' in selected)) return;
-      // safe: the 'revision' in selected guard above confirms this is a RevisionTreeItem;
-      // TypeScript does not narrow class-instance union types via the `in` operator alone.
-      const item = selected as RevisionTreeItem;
-      void vscode.env.clipboard.writeText(item.revision.commitId).then(() => {
+      if (!(selected instanceof RevisionTreeItem)) return;
+      void vscode.env.clipboard.writeText(selected.revision.commitId).then(() => {
         void vscode.window.showInformationMessage(
-          `Copied commit ID: ${item.revision.commitId.substring(0, 12)}`,
+          `Copied commit ID: ${selected.revision.commitId.substring(0, 12)}`,
         );
       });
     }),
@@ -647,13 +643,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
    * time) so the reference is always current after workspace changes.
    */
   const getActiveCommandContext = ():
-    | { service: CommandService; cli: JjCli; repository: RepositoryState }
+    | { service: CommandService; cli: JjCli; repository: RepositoryState; disposables: vscode.Disposable[] }
     | undefined => {
     const repo = repositoryManager.repositories[0];
     if (repo === undefined) return undefined;
     const service = commandServices.get(repo.rootPath);
     if (service === undefined) return undefined;
-    return { service, cli: repo.jjCli, repository: repo };
+    return { service, cli: repo.jjCli, repository: repo, disposables: context.subscriptions };
   };
 
   context.subscriptions.push(
@@ -878,9 +874,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     revisionTreeView.onDidChangeSelection((e) => {
       const selected = e.selection[0];
-      const isRevisionItem =
-        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
-      const selectedRevision = isRevisionItem ? (selected as RevisionTreeItem).revision : null;
+      const selectedRevision = selected instanceof RevisionTreeItem ? selected.revision : null;
       const activeRepo = repositoryManager.repositories[0] ?? null;
       previewProvider.setRevision(selectedRevision, activeRepo);
     }),
@@ -915,18 +909,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     graphProvider.setRevisions(repo.revisions, graphProvider.selectedChangeId);
   };
 
-  // Subscribe to the initial set of repository change events.
-  for (const repo of repositoryManager.repositories) {
-    context.subscriptions.push(repo.onDidChange(() => syncGraph()));
-  }
+  // Track per-repo graph subscriptions so they can be cleared when repos change.
+  // DisposableStore.dispose() clears its internal array, so it can be reused.
+  const graphRepoSubscriptions = new DisposableStore();
+  context.subscriptions.push(graphRepoSubscriptions);
+
+  const subscribeGraphToRepos = (): void => {
+    graphRepoSubscriptions.dispose();
+    for (const repo of repositoryManager.repositories) {
+      graphRepoSubscriptions.push(repo.onDidChange(() => syncGraph()));
+    }
+  };
+
+  subscribeGraphToRepos();
 
   // When the workspace changes (repos added/removed), re-subscribe and re-sync.
   context.subscriptions.push(
     repositoryManager.onDidChangeRepositories(() => {
       syncGraph();
-      for (const repo of repositoryManager.repositories) {
-        context.subscriptions.push(repo.onDidChange(() => syncGraph()));
-      }
+      subscribeGraphToRepos();
     }),
   );
 
@@ -934,9 +935,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     revisionTreeView.onDidChangeSelection((e) => {
       const selected = e.selection[0];
-      const isRevisionItem =
-        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
-      const changeId = isRevisionItem ? (selected as RevisionTreeItem).revision.changeId : null;
+      const changeId = selected instanceof RevisionTreeItem ? selected.revision.changeId : null;
       graphProvider.setSelectedRevision(changeId);
     }),
   );

@@ -8,6 +8,7 @@
  * Fixture: test/unit/fixtures/op-log.fixture.ndjson
  */
 
+import * as z from 'zod/mini';
 import type { Operation, OperationTime } from '../types';
 
 // ─── jj template ──────────────────────────────────────────────────────────────
@@ -32,26 +33,32 @@ export const OPERATION_TEMPLATE = [
   '"\\n"',
 ].join(' ++ ');
 
-// ─── Raw JSON types ────────────────────────────────────────────────────────────
+// ─── Raw JSON schemas and types ────────────────────────────────────────────────
+// Schemas validate actual jj CLI output at the trust boundary. Types are derived
+// from the schemas so they stay in sync automatically.
 
 /**
- * The shape produced by `json(time)` in op log templates.
+ * Schema and type for `json(time)` in op log templates.
  *
  * Timestamps have millisecond precision:
  * e.g., `"2026-03-07T14:52:29.889-08:00"`.
  */
-export interface RawOperationTime {
-  readonly start: string;
-  readonly end: string;
-}
+const RawOperationTimeSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+});
+export type RawOperationTime = z.infer<typeof RawOperationTimeSchema>;
 
+/** Schema for the complete shape produced by OPERATION_TEMPLATE for each op log line. */
+const RawOperationSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  /** "user@hostname" format */
+  user: z.string(),
+  time: RawOperationTimeSchema,
+});
 /** The complete shape produced by OPERATION_TEMPLATE for each op log line. */
-export interface RawOperation {
-  readonly id: string;
-  readonly description: string;
-  readonly user: string; // "user@hostname" format
-  readonly time: RawOperationTime;
-}
+export type RawOperation = z.infer<typeof RawOperationSchema>;
 
 // ─── Conversion functions ──────────────────────────────────────────────────────
 
@@ -76,7 +83,8 @@ export function rawOperationToOperation(raw: RawOperation): Operation {
 /**
  * Parse newline-delimited JSON op log output into an `Operation` array.
  *
- * Graceful degradation: lines that fail JSON.parse are skipped.
+ * Graceful degradation: lines that fail JSON.parse or schema validation are
+ * skipped.
  */
 export function parseOperations(stdout: string): readonly Operation[] {
   const operations: Operation[] = [];
@@ -89,10 +97,9 @@ export function parseOperations(stdout: string): readonly Operation[] {
     } catch {
       continue;
     }
-    // Safe: JSON.parse succeeded, and rawOperationToOperation accesses only
-    // the fields declared in RawOperation. Missing or incorrectly-typed fields
-    // are handled by `?? ''` and `?? []` fallbacks in the conversion function.
-    operations.push(rawOperationToOperation(raw as RawOperation));
+    const parsed = RawOperationSchema.safeParse(raw);
+    if (!parsed.success) continue;
+    operations.push(rawOperationToOperation(parsed.data));
   }
   return operations;
 }

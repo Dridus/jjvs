@@ -13,6 +13,7 @@
  * Fixture: test/unit/fixtures/log.fixture.ndjson
  */
 
+import * as z from 'zod/mini';
 import type { Revision, Identity, LocalBookmark, RemoteBookmark, Tag } from '../types';
 
 // ─── jj template ──────────────────────────────────────────────────────────────
@@ -50,72 +51,80 @@ export const REVISION_TEMPLATE = [
   '"\\n"',
 ].join(' ++ ');
 
-// ─── Raw JSON types ────────────────────────────────────────────────────────────
-// These exactly match what jj's json() template function produces for each field.
+// ─── Raw JSON schemas and types ────────────────────────────────────────────────
+// Schemas validate actual jj CLI output at the trust boundary. Types are derived
+// from the schemas so they stay in sync automatically.
 
-/** The shape produced by `json(author)` and `json(committer)` in log templates. */
-export interface RawIdentity {
-  readonly name: string;
-  readonly email: string;
+/** Schema and type for `json(author)` / `json(committer)` output. */
+const RawIdentitySchema = z.object({
+  name: z.string(),
+  email: z.string(),
   /** ISO 8601 timestamp with timezone. e.g., `"2026-03-07T12:50:29-08:00"`. */
-  readonly timestamp: string;
-}
+  timestamp: z.string(),
+});
+export type RawIdentity = z.infer<typeof RawIdentitySchema>;
 
 /**
- * The shape of each element produced by `json(parents)`.
+ * Schema and type for each element produced by `json(parents)`.
  *
  * Note: jj's `json(parents)` produces FULL parent commit objects, not just IDs.
  * The deserialiser extracts only `change_id` and `commit_id` from each parent.
  */
-export interface RawParentCommit {
-  readonly commit_id: string;
-  readonly change_id: string;
+const RawParentCommitSchema = z.object({
+  commit_id: z.string(),
+  change_id: z.string(),
   /** The parent's own parent commit IDs (as hex strings). */
-  readonly parents: readonly string[];
-  readonly description: string;
-  readonly author: RawIdentity;
-  readonly committer: RawIdentity;
-}
+  parents: z.array(z.string()),
+  description: z.string(),
+  author: RawIdentitySchema,
+  committer: RawIdentitySchema,
+});
+export type RawParentCommit = z.infer<typeof RawParentCommitSchema>;
 
-/** The shape produced by each element of `json(local_bookmarks)`. */
-export interface RawLocalBookmark {
-  readonly name: string;
+/** Schema and type for each element of `json(local_bookmarks)`. */
+const RawLocalBookmarkSchema = z.object({
+  name: z.string(),
   /** Target commit IDs. Multiple entries indicate a conflicted bookmark. */
-  readonly target: readonly string[];
-}
+  target: z.array(z.string()),
+});
+export type RawLocalBookmark = z.infer<typeof RawLocalBookmarkSchema>;
 
-/** The shape produced by each element of `json(remote_bookmarks)`. */
-export interface RawRemoteBookmark {
-  readonly name: string;
-  readonly remote: string;
+/** Schema and type for each element of `json(remote_bookmarks)`. */
+const RawRemoteBookmarkSchema = z.object({
+  name: z.string(),
+  remote: z.string(),
   /** Target commit IDs. Multiple entries indicate a conflicted remote bookmark. */
-  readonly target: readonly string[];
-  readonly tracking_target: readonly string[];
-}
+  target: z.array(z.string()),
+  tracking_target: z.array(z.string()),
+});
+export type RawRemoteBookmark = z.infer<typeof RawRemoteBookmarkSchema>;
 
-/** The shape produced by each element of `json(tags)`. */
-export interface RawTag {
-  readonly name: string;
-  readonly target: readonly string[];
-}
+/** Schema and type for each element of `json(tags)`. */
+const RawTagSchema = z.object({
+  name: z.string(),
+  target: z.array(z.string()),
+});
+export type RawTag = z.infer<typeof RawTagSchema>;
 
+/** Schema for the complete shape produced by REVISION_TEMPLATE for each log line. */
+const RawRevisionSchema = z.object({
+  changeId: z.string(),
+  commitId: z.string(),
+  description: z.string(),
+  author: RawIdentitySchema,
+  committer: RawIdentitySchema,
+  empty: z.boolean(),
+  conflict: z.boolean(),
+  immutable: z.boolean(),
+  workingCopy: z.boolean(),
+  divergent: z.boolean(),
+  parents: z.array(RawParentCommitSchema),
+  localBookmarks: z.array(RawLocalBookmarkSchema),
+  remoteBookmarks: z.array(RawRemoteBookmarkSchema),
+  tags: z.array(RawTagSchema),
+});
 /** The complete shape produced by REVISION_TEMPLATE for each log line. */
-export interface RawRevision {
-  readonly changeId: string;
-  readonly commitId: string;
-  readonly description: string;
-  readonly author: RawIdentity;
-  readonly committer: RawIdentity;
-  readonly empty: boolean;
-  readonly conflict: boolean;
-  readonly immutable: boolean;
-  readonly workingCopy: boolean;
-  readonly divergent: boolean;
-  readonly parents: readonly RawParentCommit[];
-  readonly localBookmarks: readonly RawLocalBookmark[];
-  readonly remoteBookmarks: readonly RawRemoteBookmark[];
-  readonly tags: readonly RawTag[];
-}
+export type RawRevision = z.infer<typeof RawRevisionSchema>;
 
 // ─── Conversion functions ──────────────────────────────────────────────────────
 
@@ -166,9 +175,9 @@ export function rawRevisionToRevision(raw: RawRevision): Revision {
 /**
  * Parse newline-delimited JSON log output into a `Revision` array.
  *
- * Graceful degradation: lines that fail JSON.parse are skipped. The caller
- * (currently `JjCliImpl.log`) is responsible for logging skipped lines via
- * the output channel once that infrastructure exists (Phase 4).
+ * Graceful degradation: lines that fail JSON.parse or schema validation are
+ * skipped. The caller (`JjCliImpl.log`) is responsible for logging skipped
+ * lines via the output channel.
  */
 export function parseRevisions(stdout: string): readonly Revision[] {
   const revisions: Revision[] = [];
@@ -179,14 +188,11 @@ export function parseRevisions(stdout: string): readonly Revision[] {
     try {
       raw = JSON.parse(trimmed);
     } catch {
-      // Malformed line; skip. Phase 4 will log a warning via the output channel.
       continue;
     }
-    // Safe: JSON.parse succeeded, and rawRevisionToRevision accesses only
-    // the fields declared in RawRevision. If any field is missing or has the
-    // wrong type, rawRevisionToRevision degrades gracefully (uses fallbacks
-    // like `?? ''`, `?? false`, `?? []`), so no unsafe memory access occurs.
-    revisions.push(rawRevisionToRevision(raw as RawRevision));
+    const parsed = RawRevisionSchema.safeParse(raw);
+    if (!parsed.success) continue;
+    revisions.push(rawRevisionToRevision(parsed.data));
   }
   return revisions;
 }
