@@ -126,6 +126,16 @@ export class RepositoryState implements Disposable {
    */
   private _logLimitOverride: number | undefined = undefined;
 
+  // ── Revset override ───────────────────────────────────────────────────────
+
+  /**
+   * Session-level revset override, set by the revset input UI.
+   *
+   * When set, this takes precedence over `config.revset` for `jj log`.
+   * Set to `undefined` to revert to the configuration revset.
+   */
+  private _revsetOverride: string | undefined = undefined;
+
   /**
    * Sets a one-time log limit override for pagination.
    *
@@ -135,6 +145,27 @@ export class RepositoryState implements Disposable {
    */
   updateLogLimit(limit: number): void {
     this._logLimitOverride = limit;
+  }
+
+  /**
+   * Returns the revset expression that will be used on the next refresh.
+   *
+   * Returns the session override if one is active, otherwise the config revset
+   * (which may be `""` to use jj's default revset).
+   */
+  get activeRevset(): string {
+    return this._revsetOverride ?? this.config.revset;
+  }
+
+  /**
+   * Set a session-level revset override for the revision log.
+   *
+   * Called by the revset input UI (`jjvs.revisions.setRevset`). Pass
+   * `undefined` to clear the override and revert to the configured revset.
+   * Callers must trigger `refresh()` separately for the change to take effect.
+   */
+  setRevsetOverride(revset: string | undefined): void {
+    this._revsetOverride = revset;
   }
 
   // ── Delegated CLI operations ───────────────────────────────────────────────
@@ -215,8 +246,9 @@ export class RepositoryState implements Disposable {
   }
 
   private async doRefresh(signal: AbortSignal | undefined): Promise<void> {
+    const effectiveRevset = this._revsetOverride ?? this.config.revset;
     const logOptions = {
-      ...(this.config.revset !== '' ? { revset: this.config.revset } : {}),
+      ...(effectiveRevset !== '' ? { revset: effectiveRevset } : {}),
       limit: this._logLimitOverride ?? this.config.logLimit,
       ...(signal !== undefined ? { signal } : {}),
     };

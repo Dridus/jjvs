@@ -12,9 +12,15 @@
  * calls `loadMore()`, which increases the limit by `LOAD_MORE_BATCH_SIZE` and
  * triggers a fresh `RepositoryState.refresh()`.
  *
+ * ## Revset filtering
+ *
+ * `setRevsetFilter()` delegates to `RepositoryState.setRevsetOverride()` and
+ * triggers a refresh. The caller (extension.ts) is responsible for updating the
+ * tree view's `description` to reflect the active filter.
+ *
  * ## Multi-repo
  *
- * For Phase 6a, the provider displays the revisions of a single repository.
+ * For Phase 6a/6b, the provider displays the revisions of a single repository.
  * The active repository is set via `setRepository()`. If no repository has
  * been set, the tree is empty.
  */
@@ -121,6 +127,31 @@ export class RevisionLogTreeProvider
     }
 
     return items;
+  }
+
+  // ── Revset filter ───────────────────────────────────────────────────────────
+
+  /**
+   * Apply a revset filter to the revision log.
+   *
+   * Delegates the override to `RepositoryState` and triggers an immediate
+   * refresh. Pass `undefined` to clear the session filter and revert to the
+   * configured revset. The caller (extension.ts) should update the tree view's
+   * `description` to reflect the active filter.
+   */
+  setRevsetFilter(revset: string | undefined): void {
+    if (this._repository !== null) {
+      this._repository.setRevsetOverride(revset);
+      void this._repository.refresh();
+    }
+  }
+
+  /**
+   * The revset expression currently driving the revision log, or `""` if no
+   * repository is set. Used by extension.ts to update the tree view description.
+   */
+  get activeRevset(): string {
+    return this._repository?.activeRevset ?? '';
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────

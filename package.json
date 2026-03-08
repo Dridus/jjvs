@@ -88,6 +88,13 @@
         "title": "Copy Commit ID",
         "category": "Jujutsu",
         "enablement": "jjvs:revisionSelected"
+      },
+      {
+        "command": "jjvs.revisions.setRevset",
+        "title": "Filter by Revset...",
+        "category": "Jujutsu",
+        "icon": "$(filter)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -102,6 +109,11 @@
         {
           "command": "jjvs.refresh",
           "when": "view == jjvs.revisions",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.revisions.setRevset",
+          "when": "view == jjvs.revisions && jjvs:hasRepository",
           "group": "navigation"
         }
       ],

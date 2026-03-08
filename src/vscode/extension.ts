@@ -33,6 +33,7 @@ import { JjvsSCMProvider } from './scm/provider';
 import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME } from './scm/quick-diff';
 import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
 import type { RevisionTreeItem } from './views/revisions/tree-items';
+import { RevsetSessionHistory, openRevsetInput } from './views/revisions/revset-input';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -347,11 +348,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const revisionTreeProvider = new RevisionLogTreeProvider(configService.getLogLimit());
   context.subscriptions.push(revisionTreeProvider);
 
+  const revsetHistory = new RevsetSessionHistory(context.globalState);
+
+  /** Update the tree view description to reflect the active revset filter. */
+  const updateRevisionTreeDescription = (): void => {
+    const revset = revisionTreeProvider.activeRevset;
+    // exactOptionalPropertyTypes: assigning undefined requires explicit cast to
+    // satisfy the type checker when the property type is `string | undefined`.
+    // safe: TreeView.description is declared as `string | undefined` in @types/vscode.
+    (revisionTreeView as { description: string | undefined }).description =
+      revset !== '' ? `filter: ${revset}` : undefined;
+  };
+
   // Set the active repository from the first discovered repo (Phase 6a: single repo).
   // When repositories change, update the provider so the view stays current.
   const syncRevisionTree = (): void => {
     const repos = repositoryManager.repositories;
     revisionTreeProvider.setRepository(repos.length > 0 ? repos[0] : null);
+    updateRevisionTreeDescription();
   };
 
   const revisionTreeView = vscode.window.createTreeView('jjvs.revisions', {
@@ -417,7 +431,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  // Phase 6b: register revset completion and filtering
+  // ── 6b. Revset input ──────────────────────────────────────────────────────
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.revisions.setRevset', async () => {
+      const repos = repositoryManager.repositories;
+      const repository = repos.length > 0 ? repos[0] : undefined;
+      if (repository === undefined) return;
+
+      // Build a transient JjCli bound to this repo for alias loading.
+      const cli = new JjCliImpl(
+        new JjRunnerImpl({
+          jjPath: configService.jjPath,
+          workingDirectory: repository.rootPath,
+        }),
+      );
+
+      const result = await openRevsetInput(repository, revsetHistory, cli);
+      if (result === null) {
+        // User cancelled — leave the current filter unchanged.
+        return;
+      }
+
+      if (result === undefined) {
+        // User clicked the "clear" button — remove the session filter.
+        revisionTreeProvider.setRevsetFilter(undefined);
+        updateRevisionTreeDescription();
+        return;
+      }
+
+      // User confirmed a revset expression.
+      revisionTreeProvider.setRevsetFilter(result !== '' ? result : undefined);
+      updateRevisionTreeDescription();
+      if (result !== '') {
+        await revsetHistory.push(result);
+      }
+    }),
+  );
+
   // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)
   // Phase 8: register conflict handling
   // Phase 9: register rebase command
