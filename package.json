@@ -28,42 +28,36 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "jjvs",
-          "title": "Jujutsu",
-          "icon": "$(source-control)"
-        }
-      ]
-    },
     "views": {
-      "jjvs": [
+      "scm": [
         {
           "id": "jjvs.revisions",
           "name": "Revisions",
+          "icon": "$(git-commit)",
           "when": "jjvs:hasRepository"
         },
         {
           "id": "jjvs.bookmarks",
           "name": "Bookmarks",
+          "icon": "$(bookmark)",
           "when": "jjvs:hasRepository"
         },
         {
           "id": "jjvs.oplog",
           "name": "Operation Log",
+          "icon": "$(list-unordered)",
           "when": "jjvs:hasRepository"
         },
         {
           "id": "jjvs.evolog",
           "name": "Evolution Log",
+          "icon": "$(request-changes)",
           "when": "jjvs:hasRepository"
-        }
-      ],
-      "scm": [
+        },
         {
           "id": "jjvs.details",
           "name": "Jujutsu Details",
+          "icon": "icon.svg",
           "when": "jjvs:hasRepository"
         }
       ]
