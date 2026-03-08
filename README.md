@@ -50,6 +50,19 @@ The `jj` binary must be on your `PATH`, or configure the path explicitly via `jj
 | `jjvs.autoRefresh` | `true` | Refresh views on repository state changes |
 | `jjvs.graphStyle` | `"text"` | Graph rendering (`text`/`webview`) |
 
+## Documentation
+
+Comprehensive user documentation is available in the [`docs/`](docs/) directory:
+
+- **[Getting Started](docs/getting-started/)** — Installation, first steps, and a guided basic workflow
+- **[Guides](docs/guides/)** — Task-oriented how-to articles for specific workflows (revisions, revsets,
+  bookmarks, rebasing, conflicts, git integration, operation log)
+- **[Reference](docs/reference/)** — Exhaustive lookup for all commands, settings, keyboard shortcuts,
+  revset functions, and troubleshooting
+
+If you're new to jjvs, start with [Installation](docs/getting-started/installation.md) and then
+work through the [Basic Workflow](docs/getting-started/basic-workflow.md) tutorial.
+
 ## Privacy
 
 jjvs collects **no telemetry, analytics, or usage data** of any kind.

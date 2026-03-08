@@ -275,6 +275,44 @@ Test webviews in at least three themes: a light theme, a dark theme, and high co
 
 ---
 
+## User Documentation
+
+User-facing documentation lives in `docs/` and follows the [Diataxis framework](https://diataxis.fr/).
+The four documentation types — tutorials, how-to guides, reference, and troubleshooting — serve
+different reader needs and must not be mixed within a single document.
+
+### Structure
+
+| Directory | Type | Purpose |
+|-----------|------|---------|
+| `docs/getting-started/` | Tutorial | Walk new users from installation to first workflow |
+| `docs/guides/` | How-to | Task-oriented guides for specific workflows |
+| `docs/reference/` | Reference | Exhaustive lookup tables for commands, settings, keybindings |
+
+### Rules
+
+- **Ship docs with features.** Every implementation phase that adds user-facing functionality
+  must include documentation. Never merge a feature without its corresponding docs.
+- **Accuracy over completeness.** A short, accurate document beats a long one that describes
+  behavior the extension doesn't have. Never document features from future phases.
+- **Reference pages stay in sync with `package.json`.** When commands or settings are added
+  or changed, update both `package.json` and the corresponding reference page in the same phase.
+  The commands reference (`docs/reference/commands.md`) and settings reference
+  (`docs/reference/settings.md`) must be verifiable against the extension manifest.
+- **Screenshots use real repos.** All screenshots come from running the extension against a
+  real jj repository in the Extension Development Host. Annotate each screenshot with the
+  jj version and repository state that produced it.
+- **Cross-link between types.** Guides should link to reference pages for exhaustive details.
+  Getting-started pages should link to guides for deeper dives. Reference pages should link
+  back to the guide that explains the feature in context.
+- **Plain Markdown, no build step.** Documentation is plain `.md` files. No static site
+  generator is required. The structure supports adding one later without reorganizing content.
+- **No future tense for unshipped features.** If a page references a feature not yet
+  implemented, omit that section entirely (use `<!-- TODO(phase-N): add section on X -->`
+  as a placeholder that won't render for readers).
+
+---
+
 ## No Telemetry
 
 jjvs collects no telemetry, analytics, usage data, crash reports, or any other information.
@@ -363,6 +401,9 @@ time and is significantly slower.
 2. Manually test the extension in the Extension Development Host (F5) against a real jj repo.
 3. Review all new files against this document's rules.
 4. Update this file if new patterns or conventions were established.
+5. Write or update user documentation in `docs/` for any new user-facing functionality.
+   Verify that `docs/reference/commands.md` and `docs/reference/settings.md` are in sync
+   with `package.json` contribution points.
 
 ### When resolving design ambiguity
 
