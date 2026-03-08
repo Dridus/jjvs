@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 8.
+Commands are verified against `package.json` contribution points as of Phase 11.
 
 ---
 
@@ -379,13 +379,225 @@ For a full usage walkthrough, see [Rebasing guide](../guides/rebasing.md).
 
 ---
 
-## Planned commands
+## jjvs.bookmark.create
 
-The following commands are planned for future phases and are not yet registered:
+**Title**: Create Bookmark...  
+**Category**: Jujutsu  
+**Icon**: `$(add)`  
+**Enablement**: `jjvs:hasRepository`
 
-| Command ID | Phase | Description |
-|------------|-------|-------------|
-| `jjvs.git.push` | 10 | Push to remote (`jj git push`) |
-| `jjvs.git.fetch` | 10 | Fetch from remote (`jj git fetch`) |
-| `jjvs.oplog.undo` | 11 | Undo the last operation (`jj undo`) |
-| `jjvs.oplog.redo` | 11 | Redo the last undone operation |
+Creates a new local bookmark and attaches it to a chosen revision.
+
+**Flow:**
+1. Prompt for a bookmark name (InputBox, no spaces allowed).
+2. Show a revision picker — select the target revision. The working copy (`@`) is pre-selected.
+
+Accessible from:
+- Bookmarks view toolbar (+ icon)
+- Command Palette
+
+Equivalent to: `jj bookmark create <name> -r <changeId>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#creating-a-bookmark).
+
+---
+
+## jjvs.bookmark.move
+
+**Title**: Move Bookmark...  
+**Category**: Jujutsu  
+**Icon**: `$(arrow-right)`  
+**Enablement**: `jjvs:hasRepository`
+
+Moves a local bookmark to a different revision.
+
+**Flow:**
+1. Resolve the bookmark name from the tree selection or a QuickPick list of local bookmarks.
+2. Show a revision picker — select the new target revision.
+
+Accessible from:
+- Bookmarks view context menu (right-click a local bookmark)
+- Command Palette
+
+Equivalent to: `jj bookmark move <name> --to <changeId>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#moving-a-bookmark).
+
+---
+
+## jjvs.bookmark.delete
+
+**Title**: Delete Bookmark  
+**Category**: Jujutsu  
+**Icon**: `$(trash)`  
+**Enablement**: `jjvs:hasRepository`
+
+Deletes a local bookmark after confirmation. On the next push, the bookmark will
+be deleted on the remote as well.
+
+Accessible from:
+- Bookmarks view context menu (right-click a local bookmark)
+- Command Palette
+
+Equivalent to: `jj bookmark delete <name>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#deleting-a-bookmark).
+
+---
+
+## jjvs.bookmark.forget
+
+**Title**: Forget Bookmark  
+**Category**: Jujutsu  
+**Icon**: `$(close)`  
+**Enablement**: `jjvs:hasRepository`
+
+Removes the local bookmark reference without affecting the remote. Unlike
+`jjvs.bookmark.delete`, the bookmark is not deleted from the remote on next push.
+
+Accessible from:
+- Bookmarks view context menu (right-click a local bookmark)
+- Command Palette
+
+Equivalent to: `jj bookmark forget <name>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#forgetting-a-bookmark).
+
+---
+
+## jjvs.bookmark.track
+
+**Title**: Track Remote Bookmark  
+**Category**: Jujutsu  
+**Enablement**: `jjvs:hasRepository`
+
+Starts tracking an untracked remote bookmark. After tracking, `jj git fetch` keeps
+the local reference up to date when the remote bookmark moves.
+
+Accessible from:
+- Bookmarks view context menu (right-click an untracked remote bookmark)
+- Command Palette
+
+Equivalent to: `jj bookmark track <name>@<remote>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#tracking-a-remote-bookmark).
+
+---
+
+## jjvs.bookmark.untrack
+
+**Title**: Untrack Remote Bookmark  
+**Category**: Jujutsu  
+**Enablement**: `jjvs:hasRepository`
+
+Stops tracking a remote bookmark. The remote bookmark is not affected; only the
+local tracking reference is removed.
+
+Accessible from:
+- Bookmarks view context menu (right-click a tracked remote bookmark)
+- Command Palette
+
+Equivalent to: `jj bookmark untrack <name>@<remote>`
+
+For a usage walkthrough, see [Bookmarks guide](../guides/bookmarks.md#untracking-a-remote-bookmark).
+
+---
+
+## jjvs.git.push
+
+**Title**: Push...  
+**Category**: Jujutsu  
+**Icon**: `$(cloud-upload)`  
+**Enablement**: `jjvs:hasRepository && jjvs:isColocated`
+
+Push tracked bookmarks to a git remote. Only available for colocated jj+git
+repositories (hidden for native jj repos).
+
+Shows a remote picker pre-populated with the remotes extracted from your
+bookmark data. The default remote (`jjvs.git.defaultRemote`, default `"origin"`)
+is listed first. You can also type any remote name not shown in the list.
+
+After selecting a remote, runs `jj git push --remote <remote>`. All tracked
+bookmarks that have moved since the last push are sent.
+
+Accessible from:
+- Status bar push button (`$(cloud-upload)`) — colocated repos only
+- Bookmarks view toolbar — colocated repos only
+- Command Palette
+
+Equivalent to: `jj git push --remote <remote>`
+
+For a usage walkthrough, see [Git integration guide](../guides/git-integration.md).
+
+---
+
+## jjvs.git.fetch
+
+**Title**: Fetch...  
+**Category**: Jujutsu  
+**Icon**: `$(cloud-download)`  
+**Enablement**: `jjvs:hasRepository && jjvs:isColocated`
+
+Fetch new commits and update remote-tracking bookmarks from a git remote. Only
+available for colocated jj+git repositories.
+
+Shows the same remote picker as push. After selecting a remote, runs
+`jj git fetch --remote <remote>`.
+
+Accessible from:
+- Status bar fetch button (`$(cloud-download)`) — colocated repos only
+- Bookmarks view toolbar — colocated repos only
+- Command Palette
+
+Equivalent to: `jj git fetch --remote <remote>`
+
+For a usage walkthrough, see [Git integration guide](../guides/git-integration.md).
+
+---
+
+## jjvs.oplog.undo
+
+**Title**: Undo Last Operation  
+**Category**: Jujutsu  
+**Icon**: `$(discard)`  
+**Enablement**: `jjvs:hasRepository`
+
+Undoes the most recent jj operation. Equivalent to `jj undo`. Shows a
+confirmation dialog before making any change.
+
+> Undo is itself an operation. Undoing an undo re-applies the original
+> operation (effectively a redo).
+
+Accessible from:
+- Operation Log view toolbar (discard icon)
+- Command palette: **Jujutsu: Undo Last Operation**
+
+Equivalent to: `jj undo`
+
+For a usage walkthrough, see [Operation log guide](../guides/operation-log.md).
+
+---
+
+## jjvs.oplog.restore
+
+**Title**: Restore to Operation  
+**Category**: Jujutsu  
+**Icon**: `$(history)`  
+**Enablement**: `jjvs:hasRepository`
+
+Restores the repository to the state captured by a chosen operation. Use this
+to jump back several operations at once when `jjvs.oplog.undo` is insufficient.
+
+**Flow:**
+1. If an operation is selected in the Operation Log view, it is used directly.
+2. Otherwise a QuickPick shows all available operations with their descriptions
+   and relative timestamps.
+3. A confirmation dialog appears before any change is made.
+
+Accessible from:
+- Operation Log view context menu: right-click any operation → **Restore to Operation**
+- Command palette: **Jujutsu: Restore to Operation**
+
+Equivalent to: `jj op restore <operation-id>`
+
+For a usage walkthrough, see [Operation log guide](../guides/operation-log.md).

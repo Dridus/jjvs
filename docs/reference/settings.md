@@ -115,14 +115,21 @@ modifies the repository creates one operation entry.
 **Default**: `"origin"`  
 **Scope**: Resource (per-workspace-folder)
 
-Default remote name used for git push and fetch operations. Only relevant for colocated
-jj+git repositories.
+Default remote name used as the pre-selected option in the remote picker for
+`jjvs.git.push` and `jjvs.git.fetch`. Only relevant for colocated jj+git repositories.
 
 ```json
 { "jjvs.git.defaultRemote": "upstream" }
 ```
 
-Git push and fetch commands will be available in Phase 10.
+The remote picker always lists this remote first and pre-selects it so pressing
+Enter immediately pushes or fetches from the default. You can still select a
+different remote or type one not in the list.
+
+Common values: `"origin"` (GitHub/GitLab clone default), `"upstream"` (fork
+workflow where `origin` is your fork and `upstream` is the canonical repo).
+
+See [Git integration guide](../guides/git-integration.md) for a full workflow.
 
 ---
 

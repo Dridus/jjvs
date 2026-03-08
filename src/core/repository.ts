@@ -28,7 +28,7 @@
 import type { JjCli, DescribeOptions } from './jj-cli';
 import type { JjError } from './jj-runner';
 import type { Result } from './result';
-import type { Revision, WorkingCopyStatus, RepoKind } from './types';
+import type { Revision, WorkingCopyStatus, RepoKind, Operation } from './types';
 import { TypedEventEmitter, type Disposable } from './event-emitter';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
@@ -39,6 +39,8 @@ export interface RepositoryStateConfig {
   readonly revset: string;
   /** Maximum number of revisions to fetch per refresh cycle. */
   readonly logLimit: number;
+  /** Maximum number of operations to fetch per refresh cycle. */
+  readonly oplogLimit: number;
   /** Debounce window in milliseconds for coalescing rapid refresh requests. */
   readonly refreshDebounceMs: number;
 }
@@ -73,6 +75,7 @@ export class RepositoryState implements Disposable {
 
   private _revisions: readonly Revision[] = [];
   private _workingCopyStatus: WorkingCopyStatus | undefined = undefined;
+  private _operations: readonly Operation[] = [];
   private _isRefreshing = false;
   private _lastError: string | undefined = undefined;
 
@@ -114,6 +117,11 @@ export class RepositoryState implements Disposable {
   /** The most recently fetched working copy status. `undefined` before first refresh. */
   get workingCopyStatus(): WorkingCopyStatus | undefined {
     return this._workingCopyStatus;
+  }
+
+  /** The most recently fetched operation log entries. Empty before first refresh. */
+  get operations(): readonly Operation[] {
+    return this._operations;
   }
 
   /** `true` while a refresh is in progress. */
@@ -264,10 +272,11 @@ export class RepositoryState implements Disposable {
       ...(signal !== undefined ? { signal } : {}),
     };
 
-    // Run log and status concurrently — both are read-only.
-    const [revisionsResult, statusResult] = await Promise.all([
+    // Run log, status, and op log concurrently — all are read-only.
+    const [revisionsResult, statusResult, operationsResult] = await Promise.all([
       this.cli.log(logOptions),
       this.cli.status(signal),
+      this.cli.opLog({ limit: this.config.oplogLimit, ...(signal !== undefined ? { signal } : {}) }),
     ]);
 
     if (revisionsResult.ok) {
@@ -282,6 +291,11 @@ export class RepositoryState implements Disposable {
     } else if (this._lastError === undefined) {
       this._lastError = statusResult.error.message;
     }
+
+    if (operationsResult.ok) {
+      this._operations = operationsResult.value;
+    }
+    // Op log errors are non-critical: silently degrade to the previous cached list.
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ vi.mock('fs');
 const defaultConfig: RepositoryManagerConfig = {
   revset: '',
   logLimit: 50,
+  oplogLimit: 50,
   refreshDebounceMs: 0,
 };
 
@@ -49,6 +50,7 @@ function makeCli(): JjCli {
   return {
     log: vi.fn().mockResolvedValue(ok([makeRevision()])),
     status: vi.fn().mockResolvedValue(ok(makeStatus())),
+    opLog: vi.fn().mockResolvedValue(ok([])),
   } as unknown as JjCli;
 }
 

@@ -141,6 +141,7 @@ export class ConfigService implements vscode.Disposable {
     return {
       revset: this.getRevset(resource),
       logLimit: this.getLogLimit(resource),
+      oplogLimit: this.getOplogLimit(resource),
       refreshDebounceMs: DEFAULT_REFRESH_DEBOUNCE_MS,
     };
   }

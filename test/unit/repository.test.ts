@@ -10,6 +10,7 @@ import { type JjError } from '../../src/core/jj-runner';
 const defaultConfig: RepositoryStateConfig = {
   revset: '',
   logLimit: 50,
+  oplogLimit: 50,
   refreshDebounceMs: 0, // no debounce in tests
 };
 
@@ -48,7 +49,7 @@ function makeCli(overrides: Partial<JjCli> = {}): JjCli {
     show: vi.fn(),
     diff: vi.fn(),
     bookmarkList: vi.fn(),
-    opLog: vi.fn(),
+    opLog: vi.fn().mockResolvedValue(ok([])),
     evolog: vi.fn(),
     configGet: vi.fn(),
     version: vi.fn(),
@@ -174,6 +175,7 @@ describe('RepositoryState', () => {
       const config: RepositoryStateConfig = {
         revset: 'trunk()..@',
         logLimit: 10,
+        oplogLimit: 50,
         refreshDebounceMs: 0,
       };
       const cli = makeCli();

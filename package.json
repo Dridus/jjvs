@@ -186,6 +186,74 @@
         "category": "Jujutsu",
         "icon": "$(git-merge)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.create",
+        "title": "Create Bookmark...",
+        "category": "Jujutsu",
+        "icon": "$(add)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.move",
+        "title": "Move Bookmark...",
+        "category": "Jujutsu",
+        "icon": "$(arrow-right)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.delete",
+        "title": "Delete Bookmark",
+        "category": "Jujutsu",
+        "icon": "$(trash)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.forget",
+        "title": "Forget Bookmark",
+        "category": "Jujutsu",
+        "icon": "$(close)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.track",
+        "title": "Track Remote Bookmark",
+        "category": "Jujutsu",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.bookmark.untrack",
+        "title": "Untrack Remote Bookmark",
+        "category": "Jujutsu",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.git.push",
+        "title": "Push...",
+        "category": "Jujutsu",
+        "icon": "$(cloud-upload)",
+        "enablement": "jjvs:hasRepository && jjvs:isColocated"
+      },
+      {
+        "command": "jjvs.git.fetch",
+        "title": "Fetch...",
+        "category": "Jujutsu",
+        "icon": "$(cloud-download)",
+        "enablement": "jjvs:hasRepository && jjvs:isColocated"
+      },
+      {
+        "command": "jjvs.oplog.undo",
+        "title": "Undo Last Operation",
+        "category": "Jujutsu",
+        "icon": "$(discard)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.oplog.restore",
+        "title": "Restore to Operation",
+        "category": "Jujutsu",
+        "icon": "$(history)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -211,6 +279,46 @@
           "command": "jjvs.revision.new",
           "when": "view == jjvs.revisions && jjvs:hasRepository",
           "group": "navigation"
+        },
+        {
+          "command": "jjvs.refresh",
+          "when": "view == jjvs.bookmarks",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.bookmark.create",
+          "when": "view == jjvs.bookmarks && jjvs:hasRepository",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.git.push",
+          "when": "view == jjvs.bookmarks && jjvs:hasRepository && jjvs:isColocated",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.git.fetch",
+          "when": "view == jjvs.bookmarks && jjvs:hasRepository && jjvs:isColocated",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.refresh",
+          "when": "view == jjvs.oplog",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.oplog.undo",
+          "when": "view == jjvs.oplog && jjvs:hasRepository",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "jjvs.git.push",
+          "when": "jjvs:hasRepository && jjvs:isColocated"
+        },
+        {
+          "command": "jjvs.git.fetch",
+          "when": "jjvs:hasRepository && jjvs:isColocated"
         }
       ],
       "view/item/context": [
@@ -288,6 +396,36 @@
           "command": "jjvs.revision.copyCommitId",
           "when": "view == jjvs.revisions && viewItem =~ /^revision/",
           "group": "9_copy@2"
+        },
+        {
+          "command": "jjvs.bookmark.move",
+          "when": "view == jjvs.bookmarks && viewItem =~ /localBookmark/",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "jjvs.bookmark.delete",
+          "when": "view == jjvs.bookmarks && viewItem =~ /localBookmark/",
+          "group": "3_destructive@1"
+        },
+        {
+          "command": "jjvs.bookmark.forget",
+          "when": "view == jjvs.bookmarks && viewItem =~ /localBookmark/",
+          "group": "3_destructive@2"
+        },
+        {
+          "command": "jjvs.bookmark.track",
+          "when": "view == jjvs.bookmarks && viewItem =~ /isUntracked/",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "jjvs.bookmark.untrack",
+          "when": "view == jjvs.bookmarks && viewItem =~ /isTracked/",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "jjvs.oplog.restore",
+          "when": "view == jjvs.oplog && viewItem == operation",
+          "group": "1_primary@1"
         }
       ]
     },
@@ -344,7 +482,14 @@
         },
         "jjvs.logLevel": {
           "type": "string",
-          "enum": ["off", "error", "warn", "info", "debug", "trace"],
+          "enum": [
+            "off",
+            "error",
+            "warn",
+            "info",
+            "debug",
+            "trace"
+          ],
           "default": "info",
           "description": "Verbosity level for the Jujutsu output channel.",
           "scope": "window"
@@ -385,7 +530,11 @@
         },
         "jjvs.preview.position": {
           "type": "string",
-          "enum": ["auto", "beside", "below"],
+          "enum": [
+            "auto",
+            "beside",
+            "below"
+          ],
           "default": "auto",
           "description": "Position of the preview panel showing jj show/diff output.",
           "scope": "window"
@@ -411,7 +560,10 @@
         },
         "jjvs.graphStyle": {
           "type": "string",
-          "enum": ["text", "webview"],
+          "enum": [
+            "text",
+            "webview"
+          ],
           "default": "text",
           "enumDescriptions": [
             "Show the revision graph as text characters in the tree view (fast, always available)",
@@ -439,7 +591,11 @@
     "publish": "vsce publish --no-dependencies"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "@vscode/vsce-sign", "keytar"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@vscode/vsce-sign",
+      "keytar"
+    ]
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

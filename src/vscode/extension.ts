@@ -51,7 +51,26 @@ import {
 } from './commands/revision-commands';
 import { registerResolveConflictCommand } from './commands/conflict-commands';
 import { registerRebaseCommand } from './commands/rebase-commands';
-import { ConflictStatusBar } from './status-bar';
+import {
+  registerBookmarkCreateCommand,
+  registerBookmarkMoveCommand,
+  registerBookmarkDeleteCommand,
+  registerBookmarkForgetCommand,
+  registerBookmarkTrackCommand,
+  registerBookmarkUntrackCommand,
+} from './commands/bookmark-commands';
+import { BookmarkTreeProvider } from './views/bookmarks/tree-provider';
+import { OpLogTreeProvider } from './views/op-log/tree-provider';
+import type { OpLogTreeItem } from './views/op-log/tree-items';
+import { ConflictStatusBar, JjStatusBar } from './status-bar';
+import {
+  registerGitPushCommand,
+  registerGitFetchCommand,
+} from './commands/git-commands';
+import {
+  registerOpUndoCommand,
+  registerOpRestoreCommand,
+} from './commands/op-log-commands';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -297,6 +316,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     conflictStatusBar.update(repo.revisions);
   };
 
+  // ── 10b. jj status bar (change ID + bookmarks + push/fetch) ─────────────
+
+  const jjStatusBar = new JjStatusBar();
+  context.subscriptions.push(jjStatusBar);
+
+  /** Update the jj status bar from the latest revision list. */
+  const updateJjStatusBar = (): void => {
+    const repo = repositoryManager.repositories[0];
+    if (repo === undefined) {
+      jjStatusBar.clear();
+      return;
+    }
+    jjStatusBar.update(repo.revisions, repo.kind);
+  };
+
   // Update context keys and status bar when repositories are added or removed.
   context.subscriptions.push(
     repositoryManager.onDidChangeRepositories(() => {
@@ -305,6 +339,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
       updateConflictContextKey();
       updateConflictStatusBar();
+      updateJjStatusBar();
       syncFileWatchers();
       syncCommandServices();
       syncSCMProviders();
@@ -351,6 +386,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       repo.onDidChange(() => {
         updateConflictContextKey();
         updateConflictStatusBar();
+        updateJjStatusBar();
       }),
     );
   }
@@ -581,8 +617,83 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Phase 9: rebase command
   context.subscriptions.push(registerRebaseCommand(getActiveCommandContext, revisionTreeView));
-  // Phase 10: register bookmarks tree and git commands
-  // Phase 11: register op log tree and undo/redo
+
+  // ── 10a. Bookmarks tree view ───────────────────────────────────────────────
+
+  const bookmarkTreeProvider = new BookmarkTreeProvider();
+  context.subscriptions.push(bookmarkTreeProvider);
+
+  const syncBookmarkTree = (): void => {
+    const repos = repositoryManager.repositories;
+    bookmarkTreeProvider.setRepository(repos.length > 0 ? repos[0] : null);
+  };
+
+  const bookmarkTreeView = vscode.window.createTreeView('jjvs.bookmarks', {
+    treeDataProvider: bookmarkTreeProvider,
+    showCollapseAll: true,
+  });
+  context.subscriptions.push(bookmarkTreeView);
+
+  context.subscriptions.push(
+    repositoryManager.onDidChangeRepositories(() => {
+      syncBookmarkTree();
+    }),
+  );
+
+  syncBookmarkTree();
+
+  // ── 10a. Bookmark commands ─────────────────────────────────────────────────
+
+  context.subscriptions.push(
+    registerBookmarkCreateCommand(getActiveCommandContext),
+    registerBookmarkMoveCommand(getActiveCommandContext, bookmarkTreeView),
+    registerBookmarkDeleteCommand(getActiveCommandContext, bookmarkTreeView),
+    registerBookmarkForgetCommand(getActiveCommandContext, bookmarkTreeView),
+    registerBookmarkTrackCommand(getActiveCommandContext, bookmarkTreeView),
+    registerBookmarkUntrackCommand(getActiveCommandContext, bookmarkTreeView),
+  );
+
+  // ── 10b. Git push/fetch commands ──────────────────────────────────────────
+
+  context.subscriptions.push(
+    registerGitPushCommand(getActiveCommandContext, () => configService.getDefaultRemote()),
+    registerGitFetchCommand(getActiveCommandContext, () => configService.getDefaultRemote()),
+  );
+
+  // ── 11. Op log tree view ──────────────────────────────────────────────────
+
+  const opLogTreeProvider = new OpLogTreeProvider();
+  context.subscriptions.push(opLogTreeProvider);
+
+  const syncOpLogTree = (): void => {
+    const repos = repositoryManager.repositories;
+    opLogTreeProvider.setRepository(repos.length > 0 ? repos[0] : null);
+  };
+
+  const opLogTreeView = vscode.window.createTreeView('jjvs.oplog', {
+    treeDataProvider: opLogTreeProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(opLogTreeView);
+
+  context.subscriptions.push(
+    repositoryManager.onDidChangeRepositories(() => {
+      syncOpLogTree();
+    }),
+  );
+
+  syncOpLogTree();
+
+  // ── 11. Op log commands ───────────────────────────────────────────────────
+
+  context.subscriptions.push(
+    registerOpUndoCommand(getActiveCommandContext),
+    registerOpRestoreCommand(
+      getActiveCommandContext,
+      opLogTreeView as vscode.TreeView<OpLogTreeItem>,
+    ),
+  );
+
   // Phase 12: register details view and file-level commands
   // Phase 13: register preview panel
   // Phase 14: register graph webview

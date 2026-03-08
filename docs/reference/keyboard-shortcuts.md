@@ -20,8 +20,9 @@ editor keybindings.
 
 All other jjvs commands are available from:
 - **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category
-- **Context menus** in the Revisions view (right-click a revision)
-- **View toolbar** icons (Refresh, Filter by Revset, New Revision)
+- **Context menus** in the Revisions view (right-click a revision) or Bookmarks view (right-click a bookmark)
+- **View toolbar** icons (Refresh, Filter by Revset, New Revision, Create Bookmark, Push, Fetch)
+- **Status bar** — for colocated repos, the `$(cloud-upload)` push and `$(cloud-download)` fetch buttons are clickable
 
 ---
 
