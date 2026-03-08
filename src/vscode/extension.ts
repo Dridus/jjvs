@@ -979,6 +979,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
+  // When the user completes a drag-rebase gesture in the graph, execute
+  // `jj rebase -r <source> -d <target>` directly (single-revision mode,
+  // no picker needed since the user already specified both endpoints via drag).
+  context.subscriptions.push(
+    graphProvider.onDidDragRebase(({ sourceChangeId, targetChangeId }) => {
+      const ctx = getActiveCommandContext();
+      if (ctx === undefined) return;
+      const { service, cli } = ctx;
+      void service.run(
+        { title: `Rebase ${sourceChangeId.substring(0, 8)} onto ${targetChangeId.substring(0, 8)}`, showProgress: true },
+        (signal) =>
+          cli.rebase({
+            revset: sourceChangeId,
+            mode: 'revision',
+            destination: targetChangeId,
+            signal,
+          }),
+      );
+    }),
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand('jjvs.graph.show', () => graphProvider.show()),
     vscode.commands.registerCommand('jjvs.graph.toggle', () => graphProvider.toggle()),

@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 14a.
+Commands are verified against `package.json` contribution points as of Phase 14b.
 
 ---
 
@@ -794,6 +794,24 @@ If the panel is already open, reveals it without stealing focus.
   Details, Evolution Log, and Preview panels.
 - Right-click a node or row to open a context menu with revision actions.
 - `↑`/`↓` arrow keys move the selection up and down the revision list.
+
+**Zoom and pan:**
+- **Mouse wheel** (no modifier): scroll vertically. **Shift + wheel**: scroll horizontally.
+- **Ctrl+Wheel** / **⌘+Wheel**: zoom in or out, centered on the cursor position.
+- **Drag background**: click and drag any empty area of the graph to pan.
+- **Zoom toolbar** (bottom-right corner): click `−`/`+` buttons to zoom out/in;
+  click the percentage label to reset to 100% at the origin.
+- **Ctrl+−** / **Ctrl+=**: zoom out / zoom in from the keyboard.
+- **Ctrl+0**: reset zoom and pan to the default (100%, top-left origin).
+
+**Drag-and-drop rebase:**
+- Drag any mutable revision node or row and drop it onto another revision to rebase
+  it: `jj rebase -r <source> -d <target>`. This is equivalent to using
+  `jjvs.rebase` in single-revision mode but requires no pickers.
+- A floating label follows the cursor showing the source change ID. When hovering
+  over a valid drop target the label turns green and shows both IDs.
+- Immutable revisions cannot be dragged or used as drop targets.
+- **Right-click** or **Escape** during a drag cancels the operation.
 
 Accessible from:
 - Command palette: **Jujutsu: Show Revision Graph**

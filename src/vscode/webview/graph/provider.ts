@@ -121,6 +121,16 @@ type WebviewToExtension =
       readonly type: 'contextMenuAction';
       readonly changeId: string;
       readonly action: GraphContextMenuAction;
+    }
+  | {
+      /**
+       * User completed a drag-rebase gesture by dropping a revision onto
+       * another. The extension should execute `jj rebase -r sourceChangeId
+       * -d targetChangeId`.
+       */
+      readonly type: 'dragRebase';
+      readonly sourceChangeId: string;
+      readonly targetChangeId: string;
     };
 
 // ── Helper ────────────────────────────────────────────────────────────────────
@@ -188,11 +198,27 @@ export class GraphWebviewProvider implements vscode.Disposable {
    */
   readonly onDidContextMenuAction = this._onDidContextMenuAction.event;
 
+  private readonly _onDidDragRebase = new vscode.EventEmitter<{
+    readonly sourceChangeId: string;
+    readonly targetChangeId: string;
+  }>();
+  /**
+   * Fires when the user completes a drag-rebase gesture in the graph.
+   *
+   * The source revision should be rebased so that the target revision becomes
+   * its new parent: `jj rebase -r sourceChangeId -d targetChangeId`.
+   */
+  readonly onDidDragRebase = this._onDidDragRebase.event;
+
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly logger: OutputChannelLogger,
   ) {
-    this.store.push(this._onDidSelectRevision, this._onDidContextMenuAction);
+    this.store.push(
+      this._onDidSelectRevision,
+      this._onDidContextMenuAction,
+      this._onDidDragRebase,
+    );
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -328,6 +354,11 @@ export class GraphWebviewProvider implements vscode.Disposable {
       this._onDidContextMenuAction.fire({
         changeId: message.changeId,
         action: message.action,
+      });
+    } else if (message.type === 'dragRebase') {
+      this._onDidDragRebase.fire({
+        sourceChangeId: message.sourceChangeId,
+        targetChangeId: message.targetChangeId,
       });
     }
   }
