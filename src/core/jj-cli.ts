@@ -137,10 +137,12 @@ export interface SplitOptions {
    * If empty or omitted, launches an interactive selection.
    */
   readonly paths?: readonly string[];
-  /** Description for the first revision. */
+  /**
+   * Description for the first revision (passed as `--message`).
+   * The second revision keeps the original description.
+   * jj 0.38.0 does not support setting the second description via CLI.
+   */
   readonly firstDescription?: string;
-  /** Description for the second revision. */
-  readonly secondDescription?: string;
   readonly signal?: AbortSignal;
 }
 

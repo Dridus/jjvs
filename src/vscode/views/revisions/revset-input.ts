@@ -29,7 +29,11 @@ import {
   type RevsetCompletionItem,
   type RevsetCompletionKind,
 } from '../../../core/revset/completion-provider';
-import { replaceLastToken } from '../../../core/revset/token-parser';
+import { replaceLastToken, extractFunctionContext } from '../../../core/revset/token-parser';
+import {
+  BUILTIN_REVSET_FUNCTIONS,
+  formatRevsetSignature,
+} from '../../../core/revset/function-source';
 
 // ─── History ──────────────────────────────────────────────────────────────────
 
@@ -126,6 +130,30 @@ async function loadAliasNames(cli: JjCli, signal: AbortSignal): Promise<readonly
 
 // ─── Main entry point ─────────────────────────────────────────────────────────
 
+// ─── Signature help ───────────────────────────────────────────────────────────
+
+const DEFAULT_TITLE = 'Filter Revisions by Revset';
+
+/**
+ * Build a title string that shows the active function signature with the
+ * current parameter highlighted using Unicode bold characters.
+ *
+ * Returns `DEFAULT_TITLE` when the cursor is not inside a function call or
+ * the function name is not recognised.
+ *
+ * Example output: `ancestors(𝐱[, depth]) — All ancestors of x, optionally limited to a depth`
+ */
+function buildSignatureTitle(input: string): string {
+  const context = extractFunctionContext(input);
+  if (context === null) return DEFAULT_TITLE;
+
+  const func = BUILTIN_REVSET_FUNCTIONS.find((f) => f.name === context.functionName);
+  if (func === undefined) return DEFAULT_TITLE;
+
+  const signature = formatRevsetSignature(func);
+  return `${signature} — ${func.description}`;
+}
+
 /** Button shown in the QuickPick title bar to clear the active revset filter. */
 const CLEAR_BUTTON: vscode.QuickInputButton = {
   iconPath: new vscode.ThemeIcon('clear-all'),
@@ -150,7 +178,7 @@ export async function openRevsetInput(
   const abortController = new AbortController();
 
   const quickPick = vscode.window.createQuickPick<RevsetQuickPickItem>();
-  quickPick.title = 'Filter Revisions by Revset';
+  quickPick.title = buildSignatureTitle(repository.activeRevset);
   quickPick.placeholder = 'Enter a revset expression (e.g. @ | trunk()..@)';
   quickPick.value = repository.activeRevset;
   quickPick.buttons = [CLEAR_BUTTON];
@@ -220,6 +248,10 @@ export async function openRevsetInput(
       buildApplyItem(currentValue),
       ...completions.map(buildCompletionItem),
     ];
+
+    // Update the title to show signature help when the cursor is inside
+    // a function call, or restore the default title when it is not.
+    quickPick.title = buildSignatureTitle(currentValue);
   };
 
   // ── Event wiring ──────────────────────────────────────────────────────────

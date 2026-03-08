@@ -33,6 +33,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { TypedEventEmitter, type Disposable } from '../core/event-emitter';
+import { DisposableStore } from './disposable-store';
 
 /** How long (ms) to wait for the file-system event after suppressing a change. */
 const SUPPRESSION_TIMEOUT_MS = 5_000;
@@ -46,7 +47,7 @@ export class FileWatcher implements Disposable {
   readonly onDidChange = this.changeEmitter.event;
 
   private readonly watcher: vscode.FileSystemWatcher | undefined;
-  private readonly subscriptions: vscode.Disposable[] = [];
+  private readonly store = new DisposableStore();
   private readonly fallbackTimer: ReturnType<typeof setInterval> | undefined;
 
   private _suppressionTimer: ReturnType<typeof setTimeout> | undefined;
@@ -67,7 +68,7 @@ export class FileWatcher implements Disposable {
     this.watcher = vscode.workspace.createFileSystemWatcher(opHeadsPattern);
 
     const handler = (): void => this.handleChange();
-    this.subscriptions.push(
+    this.store.push(
       this.watcher.onDidChange(handler),
       this.watcher.onDidCreate(handler),
       this.watcher.onDidDelete(handler),
@@ -150,9 +151,7 @@ export class FileWatcher implements Disposable {
     if (this.fallbackTimer !== undefined) {
       clearInterval(this.fallbackTimer);
     }
-    for (const sub of this.subscriptions) {
-      sub.dispose();
-    }
+    this.store.dispose();
     this.watcher?.dispose();
     this.changeEmitter.dispose();
   }

@@ -23,6 +23,7 @@ import type { Logger } from '../output-channel';
 import { fileChangeToResourceState } from './resource-groups';
 import type { JjFileDecorationProvider } from './decorations';
 import { JjQuickDiffProvider } from './quick-diff';
+import { DisposableStore } from '../disposable-store';
 
 /**
  * Per-repository SCM provider bridging `RepositoryState` to VSCode's Source
@@ -31,7 +32,7 @@ import { JjQuickDiffProvider } from './quick-diff';
 export class JjvsSCMProvider implements vscode.Disposable {
   private readonly sourceControl: vscode.SourceControl;
   private readonly workingCopyGroup: vscode.SourceControlResourceGroup;
-  private readonly subscriptions: vscode.Disposable[] = [];
+  private readonly store = new DisposableStore();
 
   /**
    * Suppresses the next input box auto-population after a successful `describe`.
@@ -75,7 +76,7 @@ export class JjvsSCMProvider implements vscode.Disposable {
     this.sourceControl.inputBox.placeholder =
       'Describe the working copy (jj describe)';
 
-    this.subscriptions.push(repository.onDidChange(() => this.updateResources()));
+    this.store.push(repository.onDidChange(() => this.updateResources()));
 
     // Reflect whatever state is already available (may be empty before first refresh).
     this.updateResources();
@@ -172,9 +173,7 @@ export class JjvsSCMProvider implements vscode.Disposable {
   }
 
   dispose(): void {
-    for (const subscription of this.subscriptions) {
-      subscription.dispose();
-    }
+    this.store.dispose();
     this.workingCopyGroup.dispose();
     this.decorationProvider.clearRepository(this.repository.rootPath);
     this.sourceControl.dispose();
