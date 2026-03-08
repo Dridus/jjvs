@@ -146,6 +146,76 @@ export class ConfigService implements vscode.Disposable {
     };
   }
 
+  // ── Validation ─────────────────────────────────────────────────────────────
+
+  /**
+   * Validates all `jjvs.*` settings and returns an array of user-visible
+   * warning strings. An empty array means all settings are valid.
+   *
+   * Validation supplements the JSON schema constraints in `package.json`
+   * (which only catch type errors) with semantic checks that require runtime
+   * knowledge — for example, warning when `logLimit` is high enough that it
+   * could cause noticeable lag on large repos.
+   *
+   * This method does **not** show notifications; callers are responsible for
+   * surfacing warnings through the appropriate channel (output log or a
+   * notification item).
+   */
+  validate(): readonly string[] {
+    const warnings: string[] = [];
+
+    const jjPath = this.jjPath.trim();
+    if (jjPath === '') {
+      warnings.push(
+        "jjvs.jjPath is set to an empty string. Set it to the path of the jj binary or remove it to use PATH resolution.",
+      );
+    }
+
+    const logLimit = this.getLogLimit();
+    if (logLimit > 1000) {
+      warnings.push(
+        `jjvs.logLimit is set to ${logLimit}. Values above 1000 may cause noticeable lag when loading the revision log on large repositories.`,
+      );
+    }
+
+    const oplogLimit = this.getOplogLimit();
+    if (oplogLimit > 2000) {
+      warnings.push(
+        `jjvs.oplogLimit is set to ${oplogLimit}. Values above 2000 may cause noticeable lag when loading the operation log.`,
+      );
+    }
+
+    const refreshInterval = this.getAutoRefreshInterval();
+    if (refreshInterval < 500) {
+      // This shouldn't occur in practice because package.json schema enforces minimum: 500,
+      // but guard against manual edits to settings.json.
+      warnings.push(
+        `jjvs.autoRefreshInterval is set to ${refreshInterval}ms. The minimum effective value is 500ms to avoid excessive polling.`,
+      );
+    }
+
+    const graphStyle = this.get<string>('graphStyle');
+    if (graphStyle !== undefined && graphStyle !== 'text' && graphStyle !== 'webview') {
+      warnings.push(
+        `jjvs.graphStyle has an unrecognised value '${graphStyle}'. Valid values are 'text' and 'webview'. Falling back to 'text'.`,
+      );
+    }
+
+    const previewPosition = this.get<string>('preview.position');
+    if (
+      previewPosition !== undefined &&
+      previewPosition !== 'auto' &&
+      previewPosition !== 'beside' &&
+      previewPosition !== 'below'
+    ) {
+      warnings.push(
+        `jjvs.preview.position has an unrecognised value '${previewPosition}'. Valid values are 'auto', 'beside', and 'below'. Falling back to 'auto'.`,
+      );
+    }
+
+    return warnings;
+  }
+
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   dispose(): void {

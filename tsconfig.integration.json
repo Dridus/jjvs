@@ -1,0 +1,23 @@
+{
+  // TypeScript config for compiling integration tests to CommonJS.
+  //
+  // Integration tests run inside VSCode's Electron-bundled Node.js via
+  // @vscode/test-electron + mocha. That environment expects plain CommonJS
+  // modules (require/exports), not ESNext ES modules.
+  //
+  // This config extends the main tsconfig for strict type checking but
+  // overrides the module format and module resolution to produce files that
+  // mocha can require() directly from out-test/.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "out-test",
+    "types": ["node", "mocha"],
+    // bundler moduleResolution is not compatible with CommonJS output.
+    // node resolution is used here instead.
+    "allowImportingTsExtensions": false
+  },
+  "include": ["src/**/*.ts", "test/integration/**/*.ts"],
+  "exclude": ["node_modules", "dist", "out", "webview-ui", "test/unit"]
+}

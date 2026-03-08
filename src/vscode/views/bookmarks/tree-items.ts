@@ -50,6 +50,10 @@ export class BookmarkSectionItem extends vscode.TreeItem {
     this.contextValue = 'bookmarkSection';
     // Show "none" when the section is empty so users know the section loaded.
     this.description = count === 0 ? 'none' : String(count);
+    this.tooltip =
+      sectionKind === 'local'
+        ? `Local bookmarks — tracked in this repository only`
+        : `Remote bookmarks — fetched from remote repositories`;
     this.accessibilityInformation = {
       label: `${sectionKind === 'local' ? 'Local' : 'Remote'} bookmarks section, ${count} items`,
     };

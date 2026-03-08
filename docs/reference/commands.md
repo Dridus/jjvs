@@ -197,7 +197,8 @@ For usage details, see [Revisions guide — Duplicating a revision](../guides/re
 **Title**: Abandon Revision  
 **Category**: Jujutsu  
 **Icon**: `$(trash)`  
-**Enablement**: `jjvs:hasRepository`
+**Enablement**: `jjvs:hasRepository`  
+**Default keybinding**: `X` (Revisions view focused, revision selected)
 
 Permanently removes a revision. Descendants are rebased onto the abandoned revision's
 parents. Immutable revisions are excluded. Requires confirmation before proceeding.
@@ -560,7 +561,8 @@ For a usage walkthrough, see [Git integration guide](../guides/git-integration.m
 **Title**: Undo Last Operation  
 **Category**: Jujutsu  
 **Icon**: `$(discard)`  
-**Enablement**: `jjvs:hasRepository`
+**Enablement**: `jjvs:hasRepository`  
+**Default keybinding**: `U` (Operation Log view focused)
 
 Undoes the most recent jj operation. Equivalent to `jj undo`. Shows a
 confirmation dialog before making any change.
@@ -583,7 +585,8 @@ For a usage walkthrough, see [Operation log guide](../guides/operation-log.md).
 **Title**: Restore to Operation  
 **Category**: Jujutsu  
 **Icon**: `$(history)`  
-**Enablement**: `jjvs:hasRepository`
+**Enablement**: `jjvs:hasRepository`  
+**Default keybinding**: `Enter` (Operation Log view focused, operation selected)
 
 Restores the repository to the state captured by a chosen operation. Use this
 to jump back several operations at once when `jjvs.oplog.undo` is insufficient.

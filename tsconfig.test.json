@@ -1,12 +1,15 @@
 {
   // Extends the main tsconfig so tests share the same strict settings,
-  // but includes test/ files (excluded from the main tsconfig to keep
+  // but includes test/unit/ files (excluded from the main tsconfig to keep
   // the extension build clean) and adds types needed for test code.
+  //
+  // Integration tests live in test/integration/ and have their own config
+  // (tsconfig.integration.json) that targets CommonJS for the mocha runner.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "out-test",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
-  "exclude": ["node_modules", "dist", "out", "webview-ui"]
+  "include": ["src/**/*.ts", "test/unit/**/*.ts"],
+  "exclude": ["node_modules", "dist", "out", "webview-ui", "test/integration"]
 }

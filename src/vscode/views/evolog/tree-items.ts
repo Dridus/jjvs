@@ -76,6 +76,7 @@ export class EvologLoadingTreeItem extends vscode.TreeItem {
     super('Loading...', vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon('loading~spin');
     this.contextValue = 'loading';
+    this.tooltip = 'Fetching evolution log for the selected revision…';
     this.accessibilityInformation = { label: 'Loading evolution log' };
   }
 }
@@ -88,6 +89,7 @@ export class EvologEmptyTreeItem extends vscode.TreeItem {
     super(message, vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon('info');
     this.contextValue = 'empty';
+    this.tooltip = message;
     this.accessibilityInformation = { label: message };
   }
 }

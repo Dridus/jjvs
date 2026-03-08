@@ -1,6 +1,7 @@
 # Build output
 dist/
 out/
+out-test/
 
 # Node.js
 node_modules/

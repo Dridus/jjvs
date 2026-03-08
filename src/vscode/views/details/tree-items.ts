@@ -103,6 +103,7 @@ export class LoadingTreeItem extends vscode.TreeItem {
     super('Loading...', vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon('loading~spin');
     this.contextValue = 'loading';
+    this.tooltip = 'Fetching file changes for the selected revision…';
     this.accessibilityInformation = { label: 'Loading file changes' };
   }
 }
@@ -117,6 +118,7 @@ export class EmptyTreeItem extends vscode.TreeItem {
     super(message, vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon('info');
     this.contextValue = 'empty';
+    this.tooltip = message;
     this.accessibilityInformation = { label: message };
   }
 }

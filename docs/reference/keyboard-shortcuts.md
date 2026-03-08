@@ -1,22 +1,32 @@
 # Keyboard shortcuts
 
-jjvs contributes default keybindings scoped to the Revisions view. These
-single-key bindings activate only when the Revisions view has keyboard focus
-(`focusedView == 'jjvs.revisions'`), so they do not conflict with global
-editor keybindings.
+jjvs contributes default keybindings scoped to the Revisions and Operation Log
+views. These single-key bindings activate only when the target view has keyboard
+focus (`focusedView == 'jjvs.revisions'` or `focusedView == 'jjvs.oplog'`), so
+they do not conflict with global editor keybindings.
 
 ## Default keybindings
+
+### Revisions view (`jjvs.revisions`)
 
 | Key | Command | When |
 |-----|---------|------|
 | `N` | `jjvs.revision.new` — New Revision... | Revisions view focused, repository open |
 | `E` | `jjvs.revision.edit` — Edit Revision | Revisions view focused, revision selected |
 | `D` | `jjvs.revision.describe` — Describe Revision... | Revisions view focused, revision selected |
+| `X` | `jjvs.revision.abandon` — Abandon Revision | Revisions view focused, revision selected |
 | `S` | `jjvs.revision.split` — Split Revision... | Revisions view focused, revision selected |
 | `Q` | `jjvs.revision.squash` — Squash into Parent | Revisions view focused, revision selected |
 | `A` | `jjvs.revision.absorb` — Absorb into Ancestors | Revisions view focused, repository open |
 | `B` | `jjvs.rebase` — Rebase Revision... | Revisions view focused, revision selected |
 | `R` | `jjvs.conflict.resolve` — Resolve Conflicts... | Revisions view focused, conflicts exist |
+
+### Operation Log view (`jjvs.oplog`)
+
+| Key | Command | When |
+|-----|---------|------|
+| `U` | `jjvs.oplog.undo` — Undo Last Operation | Operation Log view focused, repository open |
+| `Enter` | `jjvs.oplog.restore` — Restore to Operation | Operation Log view focused, repository open |
 
 All other jjvs commands are available from:
 - **Command Palette** (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category
@@ -96,6 +106,16 @@ other extensions when the Revisions view is not focused:
   {
     "key": "ctrl+shift+j b",
     "command": "jjvs.rebase",
+    "when": "jjvs:hasRepository"
+  },
+  {
+    "key": "ctrl+shift+j x",
+    "command": "jjvs.revision.abandon",
+    "when": "jjvs:hasRepository"
+  },
+  {
+    "key": "ctrl+shift+j u",
+    "command": "jjvs.oplog.undo",
     "when": "jjvs:hasRepository"
   },
   {

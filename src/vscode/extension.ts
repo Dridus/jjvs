@@ -108,6 +108,35 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   logger.info(`jjvs activating (extension version ${getExtensionVersion(context)})`);
 
+  // ── 1b. Settings validation ───────────────────────────────────────────────
+
+  const warnInvalidSettings = (): void => {
+    const warnings = configService.validate();
+    for (const warning of warnings) {
+      logger.warn(`Settings: ${warning}`);
+    }
+    if (warnings.length > 0) {
+      void vscode.window
+        .showWarningMessage(
+          `Jujutsu for VSCode: ${warnings.length === 1 ? 'a setting needs attention' : `${warnings.length} settings need attention`}. See the Jujutsu output channel for details.`,
+          'Open Output',
+          'Open Settings',
+        )
+        .then((choice) => {
+          if (choice === 'Open Output') {
+            rawChannel.show();
+          } else if (choice === 'Open Settings') {
+            void vscode.commands.executeCommand('workbench.action.openSettings', 'jjvs');
+          }
+        });
+    }
+  };
+
+  warnInvalidSettings();
+
+  // Re-validate whenever settings change.
+  context.subscriptions.push(configService.onDidChangeConfig(warnInvalidSettings));
+
   // ── 2. jj binary and version check ───────────────────────────────────────
 
   // Use a temporary JjCli (no repo root needed for --version) to go through

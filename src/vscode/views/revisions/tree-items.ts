@@ -93,6 +93,7 @@ export class LoadMoreTreeItem extends vscode.TreeItem {
     super('Load more...', vscode.TreeItemCollapsibleState.None);
     this.iconPath = new vscode.ThemeIcon('more');
     this.contextValue = 'loadMore';
+    this.tooltip = `Load more revisions (currently showing ${currentLimit}). Click to increase the limit.`;
     this.command = {
       command: 'jjvs.revisions.loadMore',
       title: 'Load More Revisions',

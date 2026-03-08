@@ -572,6 +572,21 @@
         "key": "b",
         "command": "jjvs.rebase",
         "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "x",
+        "command": "jjvs.revision.abandon",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "u",
+        "command": "jjvs.oplog.undo",
+        "when": "focusedView == 'jjvs.oplog' && jjvs:hasRepository"
+      },
+      {
+        "key": "enter",
+        "command": "jjvs.oplog.restore",
+        "when": "focusedView == 'jjvs.oplog' && jjvs:hasRepository"
       }
     ],
     "configuration": {
@@ -684,7 +699,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:integration": "node ./node_modules/@vscode/test-cli/bin/vscode-test",
+    "compile:integration": "tsc -p tsconfig.integration.json",
+    "test:integration": "pnpm compile:integration && node ./node_modules/@vscode/test-cli/bin/vscode-test",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -702,6 +718,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^22.0.0",
     "@types/vscode": "1.105.0",
     "@vscode/test-cli": "^0.0.10",

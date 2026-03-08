@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Cancel in-flight runs for the same branch/PR on new pushes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Build, lint, typecheck, unit tests ─────────────────────────────────────
+  build:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (production)
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Package (verify .vsix can be built)
+        run: pnpm package
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jjvs-${{ github.sha }}.vsix
+          path: '*.vsix'
+          retention-days: 7
+
+  # ── Integration tests (require jj binary + display) ─────────────────────────
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    # Integration tests need a display server (Xvfb) to launch the VSCode
+    # Extension Development Host, and a working jj binary.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install jj
+        run: |
+          JJ_VERSION="0.28.4"
+          curl -L --fail \
+            "https://github.com/jj-vcs/jj/releases/download/v${JJ_VERSION}/jj-v${JJ_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+            | tar -xz -C /usr/local/bin jj
+          jj --version
+
+      - name: Build (production)
+        run: pnpm build
+
+      - name: Compile integration tests
+        run: pnpm compile:integration
+
+      - name: Run integration tests (headless)
+        run: xvfb-run -a pnpm test:integration
+        env:
+          # Ensure jj is on PATH for the extension host.
+          PATH: /usr/local/bin:${{ env.PATH }}
+          # Suppress colour codes and interactive prompts in jj output.
+          NO_COLOR: '1'
