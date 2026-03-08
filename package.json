@@ -95,6 +95,48 @@
         "category": "Jujutsu",
         "icon": "$(filter)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.new",
+        "title": "New Revision...",
+        "category": "Jujutsu",
+        "icon": "$(add)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.edit",
+        "title": "Edit Revision",
+        "category": "Jujutsu",
+        "icon": "$(arrow-right)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.abandon",
+        "title": "Abandon Revision",
+        "category": "Jujutsu",
+        "icon": "$(trash)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.describe",
+        "title": "Describe Revision...",
+        "category": "Jujutsu",
+        "icon": "$(edit)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.describeInEditor",
+        "title": "Describe Revision in Editor...",
+        "category": "Jujutsu",
+        "icon": "$(go-to-file)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.duplicate",
+        "title": "Duplicate Revision",
+        "category": "Jujutsu",
+        "icon": "$(copy)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -115,9 +157,44 @@
           "command": "jjvs.revisions.setRevset",
           "when": "view == jjvs.revisions && jjvs:hasRepository",
           "group": "navigation"
+        },
+        {
+          "command": "jjvs.revision.new",
+          "when": "view == jjvs.revisions && jjvs:hasRepository",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
+        {
+          "command": "jjvs.revision.new",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "1_primary@1"
+        },
+        {
+          "command": "jjvs.revision.edit",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /workingCopy/)",
+          "group": "1_primary@2"
+        },
+        {
+          "command": "jjvs.revision.describe",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "2_modify@1"
+        },
+        {
+          "command": "jjvs.revision.describeInEditor",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "2_modify@2"
+        },
+        {
+          "command": "jjvs.revision.duplicate",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "2_modify@3"
+        },
+        {
+          "command": "jjvs.revision.abandon",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "3_destructive@1"
+        },
         {
           "command": "jjvs.revision.copyChangeId",
           "when": "view == jjvs.revisions && viewItem =~ /^revision/",

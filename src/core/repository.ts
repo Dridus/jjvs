@@ -95,6 +95,17 @@ export class RepositoryState implements Disposable {
 
   // ── Getters ────────────────────────────────────────────────────────────────
 
+  /**
+   * The `JjCli` instance for this repository.
+   *
+   * Exposed for `CommandService` (VSCode layer) so that mutation commands can
+   * call CLI methods without duplicating the runner configuration. This is the
+   * only intentional exposure of the CLI outside `RepositoryState`.
+   */
+  get jjCli(): JjCli {
+    return this.cli;
+  }
+
   /** The most recently fetched revision log entries. Empty before first refresh. */
   get revisions(): readonly Revision[] {
     return this._revisions;

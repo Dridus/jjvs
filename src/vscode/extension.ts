@@ -16,7 +16,8 @@
 
 import * as vscode from 'vscode';
 import { JjRunnerImpl } from '../core/jj-runner';
-import { JjCliImpl } from '../core/jj-cli';
+import { JjCliImpl, type JjCli } from '../core/jj-cli';
+import type { RepositoryState } from '../core/repository';
 import {
   meetsMinimumVersion,
   formatVersion,
@@ -34,6 +35,15 @@ import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME } from './scm/quick-diff'
 import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
 import type { RevisionTreeItem } from './views/revisions/tree-items';
 import { RevsetSessionHistory, openRevsetInput } from './views/revisions/revset-input';
+import { CommandService } from './commands/command-service';
+import {
+  registerNewRevisionCommand,
+  registerEditRevisionCommand,
+  registerAbandonRevisionCommand,
+  registerDescribeRevisionCommand,
+  registerDescribeInEditorCommand,
+  registerDuplicateRevisionCommand,
+} from './commands/revision-commands';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -191,6 +201,33 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     originalContentProvider,
   );
 
+  // ── 7. Per-repo CommandService instances ─────────────────────────────────
+  // Keyed by rootPath, like fileWatchers and scmProviders.
+  const commandServices = new Map<string, CommandService>();
+
+  const syncCommandServices = (): void => {
+    const repoRoots = new Set(repositoryManager.repositories.map((r) => r.rootPath));
+
+    for (const repo of repositoryManager.repositories) {
+      if (!commandServices.has(repo.rootPath)) {
+        const service = new CommandService(
+          repo,
+          fileWatchers.get(repo.rootPath),
+          logger,
+        );
+        commandServices.set(repo.rootPath, service);
+        logger.debug(`CommandService created for ${repo.rootPath}`);
+      }
+    }
+
+    for (const rootPath of commandServices.keys()) {
+      if (!repoRoots.has(rootPath)) {
+        commandServices.delete(rootPath);
+        logger.debug(`CommandService removed for ${rootPath}`);
+      }
+    }
+  };
+
   const scmProviders = new Map<string, JjvsSCMProvider>();
 
   const syncSCMProviders = (): void => {
@@ -231,6 +268,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
       updateConflictContextKey();
       syncFileWatchers();
+      syncCommandServices();
       syncSCMProviders();
     }),
   );
@@ -274,6 +312,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const workspacePaths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
   await repositoryManager.updateWorkspacePaths(workspacePaths);
   syncFileWatchers();
+  syncCommandServices();
   syncSCMProviders();
 
   // Subscribe to each repo's change events so hasConflicts stays current.
@@ -293,6 +332,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const paths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
       await repositoryManager.updateWorkspacePaths(paths);
       syncFileWatchers();
+      syncCommandServices();
       syncSCMProviders();
     }),
   );
@@ -469,7 +509,32 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }),
   );
 
-  // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)
+  // ── 7. Revision commands ──────────────────────────────────────────────────
+
+  /**
+   * Returns the CommandService, JjCli, and RepositoryState for the first
+   * active repository. Called at command invocation time (not registration
+   * time) so the reference is always current after workspace changes.
+   */
+  const getActiveCommandContext = ():
+    | { service: CommandService; cli: JjCli; repository: RepositoryState }
+    | undefined => {
+    const repo = repositoryManager.repositories[0];
+    if (repo === undefined) return undefined;
+    const service = commandServices.get(repo.rootPath);
+    if (service === undefined) return undefined;
+    return { service, cli: repo.jjCli, repository: repo };
+  };
+
+  context.subscriptions.push(
+    registerNewRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerEditRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerAbandonRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerDescribeRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerDescribeInEditorCommand(getActiveCommandContext, revisionTreeView),
+    registerDuplicateRevisionCommand(getActiveCommandContext, revisionTreeView),
+  );
+
   // Phase 8: register conflict handling
   // Phase 9: register rebase command
   // Phase 10: register bookmarks tree and git commands
