@@ -13,7 +13,7 @@
 
   type ViewState = 'empty' | 'loading' | 'content' | 'error';
 
-  let viewState: ViewState = $state('empty');
+  let viewState = $state<ViewState>('empty');
   let rawContent = $state('');
   let errorText = $state('');
 

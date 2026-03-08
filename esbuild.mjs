@@ -4,7 +4,6 @@
  * Produces two kinds of bundles:
  *   1. Extension host bundle  – Node.js/CJS target, entry: src/vscode/extension.ts
  *   2. Webview bundles        – Browser/ESM target with Svelte 5, one per webview app
- *      (added incrementally as webview phases are implemented)
  *
  * Usage:
  *   node esbuild.mjs              # development build (with source maps)
@@ -18,20 +17,45 @@ import esbuildSvelte from 'esbuild-svelte';
 const isWatch = process.argv.includes('--watch');
 const isProduction = process.argv.includes('--production');
 
+/** @type {Partial<esbuild.BuildOptions>} */
+const commonOptions = {
+  bundle: true,
+  sourcemap: !isProduction,
+  minify: isProduction,
+  metafile: isProduction,
+};
+
+/** @type {esbuild.Plugin} */
+const watchLogPlugin = {
+  name: 'watch-log-plugin',
+  setup: isWatch
+    ? (build) => {
+        const prefix = `[watch ${build.initialOptions.outfile ?? build.initialOptions.outdir}]`;
+        build.onStart(() => {
+          console.log(`${prefix} Build started`);
+        });
+        build.onEnd((result) => {
+          result.errors.forEach(({ text, location }) => {
+            console.error(`${location.file}:${location.line}:${location.column} - ${text}`);
+          });
+          console.log(`${prefix} Waiting for changes...`);
+        });
+      }
+    : () => {},
+};
+
 /** @type {esbuild.BuildOptions} */
 const extensionBundleOptions = {
+  ...commonOptions,
   entryPoints: ['src/vscode/extension.ts'],
-  bundle: true,
   format: 'cjs',
   platform: 'node',
   outfile: 'dist/extension.js',
   // vscode is provided by the extension host at runtime; never bundle it
   external: ['vscode'],
-  sourcemap: !isProduction,
-  minify: isProduction,
   // Tree-shake aggressively in production
   treeShaking: true,
-  metafile: isProduction,
+  plugins: [watchLogPlugin],
 };
 
 /**
@@ -39,32 +63,24 @@ const extensionBundleOptions = {
  * is bundled separately for the browser environment. The Svelte plugin
  * compiles .svelte files to JS.
  *
- * Phase 13+ will populate this array with graph and preview webview entries.
- *
  * @type {esbuild.BuildOptions[]}
  */
 const webviewBundleOptions = [
-  // Phase 13: preview webview
+  // Preview webview
   {
     entryPoints: ['webview-ui/preview/main.ts'],
-    bundle: true,
     format: 'esm',
     platform: 'browser',
     outdir: 'dist/webviews/preview',
-    sourcemap: !isProduction,
-    minify: isProduction,
-    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
+    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } }), watchLogPlugin],
   },
-  // Phase 14: graph webview
+  // Graph webview
   {
     entryPoints: ['webview-ui/graph/main.ts'],
-    bundle: true,
     format: 'esm',
     platform: 'browser',
     outdir: 'dist/webviews/graph',
-    sourcemap: !isProduction,
-    minify: isProduction,
-    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
+    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } }), watchLogPlugin],
   },
 ];
 
@@ -74,7 +90,6 @@ async function build() {
   if (isWatch) {
     const contexts = await Promise.all(allBundleOptions.map((opts) => esbuild.context(opts)));
     await Promise.all(contexts.map((ctx) => ctx.watch()));
-    console.log('[jjvs] Watching for changes...');
   } else {
     const results = await Promise.all(allBundleOptions.map((opts) => esbuild.build(opts)));
 

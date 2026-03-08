@@ -5,7 +5,7 @@
       "name": "Run Extension",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "--log", "dridus.jjvs:debug"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "preLaunchTask": "Build Extension (watch)",
       "sourceMaps": true,
@@ -15,7 +15,7 @@
       "name": "Run Extension (production build)",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}", "--log", "dridus.jjvs:debug"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "preLaunchTask": "Build Extension",
       "sourceMaps": false

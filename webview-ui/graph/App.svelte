@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
   import {
     computeLayout,
     type GraphRevision,
@@ -46,6 +46,9 @@
     getState(): unknown;
     setState(state: unknown): void;
   };
+</script>
+
+<script lang="ts">
 
   const vscode = acquireVsCodeApi();
 
