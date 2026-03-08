@@ -137,6 +137,41 @@
         "category": "Jujutsu",
         "icon": "$(copy)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.split",
+        "title": "Split Revision...",
+        "category": "Jujutsu",
+        "icon": "$(split-horizontal)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.squash",
+        "title": "Squash Revision...",
+        "category": "Jujutsu",
+        "icon": "$(fold-down)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.restore",
+        "title": "Restore Revision...",
+        "category": "Jujutsu",
+        "icon": "$(discard)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.absorb",
+        "title": "Absorb into Ancestors",
+        "category": "Jujutsu",
+        "icon": "$(arrow-up)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.revert",
+        "title": "Revert Revision...",
+        "category": "Jujutsu",
+        "icon": "$(history)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -196,6 +231,31 @@
           "group": "3_destructive@1"
         },
         {
+          "command": "jjvs.revision.split",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "2_modify@4"
+        },
+        {
+          "command": "jjvs.revision.squash",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "2_modify@5"
+        },
+        {
+          "command": "jjvs.revision.restore",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && !(viewItem =~ /immutable/)",
+          "group": "2_modify@6"
+        },
+        {
+          "command": "jjvs.revision.absorb",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/ && viewItem =~ /workingCopy/",
+          "group": "2_modify@7"
+        },
+        {
+          "command": "jjvs.revision.revert",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "3_destructive@2"
+        },
+        {
           "command": "jjvs.revision.copyChangeId",
           "when": "view == jjvs.revisions && viewItem =~ /^revision/",
           "group": "9_copy@1"
@@ -207,6 +267,38 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "key": "n",
+        "command": "jjvs.revision.new",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository"
+      },
+      {
+        "key": "e",
+        "command": "jjvs.revision.edit",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "d",
+        "command": "jjvs.revision.describe",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "s",
+        "command": "jjvs.revision.split",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "q",
+        "command": "jjvs.revision.squash",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
+      },
+      {
+        "key": "a",
+        "command": "jjvs.revision.absorb",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository"
+      }
+    ],
     "configuration": {
       "title": "Jujutsu for VSCode",
       "properties": {

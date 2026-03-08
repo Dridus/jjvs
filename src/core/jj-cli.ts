@@ -116,10 +116,18 @@ export interface RebaseOptions {
 /** Options for `jj squash`. */
 export interface SquashOptions {
   /**
-   * The revision whose changes to squash into its parent.
+   * The revision whose changes to squash.
    * Defaults to `@`.
    */
   readonly changeId?: string;
+  /**
+   * Squash into this specific ancestor revision instead of the direct parent.
+   * Equivalent to `--into <revset>`.
+   * When omitted, jj squashes into the direct parent.
+   *
+   * Requires jj >= 0.14.0 (verified in jj 0.38.0).
+   */
+  readonly into?: string;
   /** Specific file paths to squash (subset of changed files). */
   readonly paths?: readonly string[];
   /** Message for the resulting squashed commit. */
@@ -603,6 +611,9 @@ export class JjCliImpl implements JjCli {
     const args = ['squash'];
     if (options?.changeId !== undefined) {
       args.push('-r', options.changeId);
+    }
+    if (options?.into !== undefined) {
+      args.push('--into', options.into);
     }
     if (options?.message !== undefined) {
       args.push('--message', options.message);

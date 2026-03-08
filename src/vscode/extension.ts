@@ -43,6 +43,11 @@ import {
   registerDescribeRevisionCommand,
   registerDescribeInEditorCommand,
   registerDuplicateRevisionCommand,
+  registerSplitRevisionCommand,
+  registerSquashRevisionCommand,
+  registerRestoreRevisionCommand,
+  registerAbsorbCommand,
+  registerRevertRevisionCommand,
 } from './commands/revision-commands';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
@@ -533,6 +538,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerDescribeRevisionCommand(getActiveCommandContext, revisionTreeView),
     registerDescribeInEditorCommand(getActiveCommandContext, revisionTreeView),
     registerDuplicateRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerSplitRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerSquashRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerRestoreRevisionCommand(getActiveCommandContext, revisionTreeView),
+    registerAbsorbCommand(getActiveCommandContext),
+    registerRevertRevisionCommand(getActiveCommandContext, revisionTreeView),
   );
 
   // Phase 8: register conflict handling

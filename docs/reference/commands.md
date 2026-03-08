@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 7a.
+Commands are verified against `package.json` contribution points as of Phase 7b.
 
 ---
 
@@ -210,14 +210,116 @@ For usage details, see [Revisions guide — Abandoning a revision](../guides/rev
 
 ---
 
+## jjvs.revision.split
+
+**Title**: Split Revision...
+**Category**: Jujutsu
+**Icon**: `$(split-horizontal)`
+**Enablement**: `jjvs:hasRepository`
+
+Splits a revision into two. The user selects which changed files go into the
+first (earlier) revision; the remaining files stay in the second revision.
+
+**Flow**: Select a mutable revision → multi-select files for the first revision
+→ enter an optional description for the first revision → the two new revisions
+replace the original in the DAG.
+
+Context menu: visible on mutable revision items (`viewItem =~ /^revision/ && !(viewItem =~ /immutable/)`)
+
+Default keybinding (Revisions view focused): `S`
+
+Equivalent to: `jj split -r <changeId> -- <paths...> [--message <description>]`
+
+For usage details, see [Revisions guide — Splitting a revision](../guides/revisions.md#splitting-a-revision).
+
+---
+
+## jjvs.revision.squash
+
+**Title**: Squash Revision...
+**Category**: Jujutsu
+**Icon**: `$(fold-down)`
+**Enablement**: `jjvs:hasRepository`
+
+Merges a revision's changes into a target ancestor, removing the revision from
+the DAG. The default target is the direct parent. A second step lets the user
+pick any mutable ancestor as an alternative target (`jj squash --into`).
+Requires confirmation before proceeding.
+
+Context menu: visible on mutable revision items (`viewItem =~ /^revision/ && !(viewItem =~ /immutable/)`)
+
+Default keybinding (Revisions view focused): `Q`
+
+Equivalent to: `jj squash -r <changeId> [--into <target>]`
+
+For usage details, see [Revisions guide — Squashing a revision](../guides/revisions.md#squashing-a-revision-into-its-parent).
+
+---
+
+## jjvs.revision.restore
+
+**Title**: Restore Revision...
+**Category**: Jujutsu
+**Icon**: `$(discard)`
+**Enablement**: `jjvs:hasRepository`
+
+Discards all changes in a revision by restoring its file contents to match its
+parent. Requires confirmation since changes are not recoverable within jjvs.
+
+Context menu: visible on mutable revision items (`viewItem =~ /^revision/ && !(viewItem =~ /immutable/)`)
+
+Equivalent to: `jj restore [--into <changeId>]`
+
+For usage details, see [Revisions guide — Restoring a revision](../guides/revisions.md#restoring-a-revision-to-its-parent-state).
+
+---
+
+## jjvs.revision.absorb
+
+**Title**: Absorb into Ancestors
+**Category**: Jujutsu
+**Icon**: `$(arrow-up)`
+**Enablement**: `jjvs:hasRepository`
+
+Absorbs lines from the working copy (`@`) into the ancestor revisions that last
+modified those regions. Lines that cannot be unambiguously attributed to an
+ancestor remain in the working copy.
+
+Context menu: visible on working copy revision items (`viewItem =~ /workingCopy/`)
+
+Default keybinding (Revisions view focused): `A`
+
+Equivalent to: `jj absorb`
+
+For usage details, see [Revisions guide — Absorbing changes](../guides/revisions.md#absorbing-working-copy-changes-into-ancestors).
+
+---
+
+## jjvs.revision.revert
+
+**Title**: Revert Revision...
+**Category**: Jujutsu
+**Icon**: `$(history)`
+**Enablement**: `jjvs:hasRepository`
+
+Creates a new revision whose changes are the exact inverse of the selected
+revision, effectively undoing that revision's effect in the working copy.
+The inverse revision is placed on top of the current working copy (`@`).
+
+Context menu: visible on all revision items
+
+Equivalent to: `jj revert -r <changeId> --onto @`
+
+For usage details, see [Revisions guide — Reverting a revision](../guides/revisions.md#reverting-a-revision).
+
+---
+
 ## Planned commands
 
 The following commands are planned for future phases and are not yet registered:
 
 | Command ID | Phase | Description |
 |------------|-------|-------------|
-| `jjvs.revision.split` | 7b | Split a revision into two (`jj split`) |
-| `jjvs.revision.squash` | 7b | Squash into parent (`jj squash`) |
 | `jjvs.rebase` | 9 | Rebase with source/target picker (`jj rebase`) |
 | `jjvs.git.push` | 10 | Push to remote (`jj git push`) |
 | `jjvs.git.fetch` | 10 | Fetch from remote (`jj git fetch`) |

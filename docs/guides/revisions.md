@@ -1,9 +1,10 @@
 # Working with revisions
 
-This guide covers how to create, navigate, describe, duplicate, and abandon
-revisions using jjvs commands. All commands are accessible from the Command
-Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, and
-from the right-click context menu in the Revisions view.
+This guide covers how to create, navigate, describe, duplicate, abandon, split,
+squash, restore, absorb, and revert revisions using jjvs commands. All commands
+are accessible from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under
+the **Jujutsu** category, and from the right-click context menu in the
+Revisions view.
 
 **Prerequisites**: An open jj repository with the Revisions view visible. If
 you have not yet set up jjvs, see [Installation](../getting-started/installation.md)
@@ -185,19 +186,162 @@ Revisions marked **immutable** (shown with a 🔒 icon in the Revisions view)
 cannot be rewritten. They are typically revisions that have been pushed to a
 remote or that are ancestors of the root change.
 
-- `abandon` and `describe` exclude immutable revisions from their pickers.
-- `edit` allows moving `@` to an immutable revision (read-only inspection).
-- `new` can create a child of an immutable revision (branching from it).
-- `duplicate` can copy an immutable revision (the copy is mutable).
+| Command | Behaviour with immutable revisions |
+|---|---|
+| `edit` | Allowed — moves `@` to an immutable revision for inspection |
+| `new` | Allowed — creates a mutable child of an immutable revision |
+| `duplicate` | Allowed — the copy is mutable even if the original is immutable |
+| `revert` | Allowed — creates a new inverse revision; the original is untouched |
+| `abandon` | Excluded from picker — jj cannot abandon immutable revisions |
+| `describe` | Excluded from picker — jj cannot rewrite immutable revisions |
+| `split` | Excluded from picker — splitting rewrites the revision |
+| `squash` | Excluded from source picker — squashing rewrites the source revision |
+| `restore` | Excluded from picker — restoring rewrites the revision's files |
+| `absorb` | N/A — always acts on the working copy (`@`) |
 
 ---
 
-## Planned features
+## Splitting a revision
 
-The following operations are planned for later phases:
+Use **Jujutsu: Split Revision...** to divide a revision's changes into two
+separate revisions. The original revision is replaced by the two new ones in
+the DAG.
 
-<!-- TODO(phase-7b): add section on split -->
-<!-- TODO(phase-7b): add section on squash -->
+> **When to use split**: You made a large change and want to separate it into
+> smaller, focused revisions before pushing. Split lets you do this without
+> losing any work.
+
+**Flow:**
+
+1. Open the Command Palette and type **Jujutsu: Split Revision...**, or
+   right-click a mutable revision and choose **Split Revision...**.
+2. If no mutable revision is selected, choose one from the picker.
+3. A list of all changed files in the revision appears. **Check the files that
+   should go into the first (earlier) revision.** The unchecked files stay in
+   the second revision.
+4. Enter an optional description for the first revision, then press Enter.
+
+The first revision contains the selected files. The second revision contains
+the remaining files and keeps the original description.
+
+> **Tip**: You cannot split a revision that has only one changed file (there is
+> nothing to split).
+
+**What jjvs runs:**
+
+```
+jj split -r <changeId> -- <selectedPaths...> [--message <firstDescription>]
+```
+
+---
+
+## Squashing a revision
+
+Use **Jujutsu: Squash Revision...** to merge a revision's changes into an
+ancestor, removing the revision from the DAG. The default target is the direct
+parent; you can also choose any other mutable ancestor.
+
+> **When to use squash**: You have a "fixup" or "oops" commit that logically
+> belongs to an earlier revision. Squash folds it in cleanly.
+
+1. Open the Command Palette and type **Jujutsu: Squash Revision...**, or
+   right-click a mutable revision and choose **Squash Revision...**.
+2. If no mutable revision is selected, choose one from the picker.
+3. Choose the squash target:
+   - **Into parent** — squash directly into the parent (most common).
+   - **Into specific ancestor...** — shows a second picker listing all mutable
+     ancestors; use this when the change logically belongs further back in the
+     stack (equivalent to `jj squash --into`).
+4. Confirm the operation in the dialog.
+
+After squashing, the target revision contains all changes from both revisions.
+
+**What jjvs runs:**
+
+```
+jj squash -r <changeId> [--into <ancestorChangeId>]
+```
+
+---
+
+## Restoring a revision to its parent state
+
+Use **Jujutsu: Restore Revision...** to discard all changes in a revision and
+reset its file contents to match its parent. This is most useful on the working
+copy (`@`) to discard uncommitted changes.
+
+> **Warning**: Restore discards all changes in the revision. This cannot be
+> undone from within jjvs — use `jj op undo` in the terminal to recover via
+> the operation log if needed.
+
+1. Open the Command Palette and type **Jujutsu: Restore Revision...**, or
+   right-click a mutable revision and choose **Restore Revision...**.
+2. If no mutable revision is selected, choose one from the picker.
+3. Confirm the operation in the dialog.
+
+**What jjvs runs:**
+
+```
+jj restore [--into <changeId>]
+```
+
+(When restoring the working copy, `--into` is omitted and `@` is used by
+default.)
+
+---
+
+## Absorbing working copy changes into ancestors
+
+Use **Jujutsu: Absorb into Ancestors** to automatically move lines from the
+working copy (`@`) into the ancestor revisions that last modified those same
+lines. Only changes that can be unambiguously attributed to a single ancestor
+are absorbed — the rest stay in the working copy.
+
+> **When to use absorb**: You have a stack of revisions and you've made small
+> tweaks to files already changed in earlier revisions. Absorb assigns each
+> change to the right ancestor without you having to manually squash or split.
+
+1. Open the Command Palette and type **Jujutsu: Absorb into Ancestors**, or
+   right-click the working copy revision and choose **Absorb into Ancestors**.
+
+No picker is needed — absorb always acts on the working copy (`@`).
+
+**What jjvs runs:**
+
+```
+jj absorb
+```
+
+---
+
+## Reverting a revision
+
+Use **Jujutsu: Revert Revision...** to create a new revision whose changes are
+the exact inverse of the selected revision. The inverse is placed on top of
+the working copy, effectively undoing the selected revision's effect in the
+current chain.
+
+> **Revert vs. undo**: `revert` creates a NEW revision that cancels out the
+> original — both remain in history. The Operation Log's undo command
+> (`jj undo`) removes the entire operation from history. Use revert when you
+> want to record the "un-doing" as an explicit change.
+
+1. Open the Command Palette and type **Jujutsu: Revert Revision...**, or
+   right-click any revision and choose **Revert Revision...**.
+2. Select the revision to create an inverse of.
+3. Confirm the operation in the dialog.
+
+A new revision is created on top of the working copy with a description like
+`"Revert '<original description>'"`.
+
+**What jjvs runs:**
+
+```
+jj revert -r <changeId> --onto @
+```
+
+---
+
 <!-- TODO(phase-9): add section on rebase -->
 
 ---

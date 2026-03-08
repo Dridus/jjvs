@@ -29,6 +29,7 @@ import type { JjCli } from '../../core/jj-cli';
 import type { RepositoryState } from '../../core/repository';
 import type { Revision } from '../../core/types';
 import type { CommandService } from './command-service';
+import { parseDiffStatPaths } from '../../core/deserializers/diff';
 import { pickRevision } from '../pickers/revision-picker';
 import { RevisionTreeItem, type LoadMoreTreeItem } from '../views/revisions/tree-items';
 
@@ -406,6 +407,382 @@ export function registerDuplicateRevisionCommand(
 
     await ctx.service.run({ title: 'Duplicate' }, (signal) =>
       ctx.cli.duplicate([revision.changeId], signal),
+    );
+  });
+}
+
+// ─── jjvs.revision.split ─────────────────────────────────────────────────────
+
+/**
+ * Register `jjvs.revision.split`.
+ *
+ * Splits a revision into two. The user selects which changed files go into the
+ * FIRST of the two new revisions; the remaining files stay in the second.
+ *
+ * ## Flow
+ *
+ * 1. Resolve the target revision (fast-path from tree selection if mutable).
+ * 2. Fetch the list of changed files via `jj diff --stat -r <changeId>`.
+ * 3. Show a multi-select QuickPick — the user picks files for the first revision.
+ * 4. Optionally enter a description for the first revision.
+ * 5. Run `jj split -r <changeId> -- <selectedPaths...>`.
+ */
+export function registerSplitRevisionCommand(
+  getContext: () => RevisionCommandContext | undefined,
+  revisionTreeView: vscode.TreeView<RevisionTreeItem | LoadMoreTreeItem>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('jjvs.revision.split', async () => {
+    const ctx = getContext();
+    if (ctx === undefined) return;
+
+    const treeSelection = getTreeSelection(revisionTreeView);
+
+    // Fast path: mutable tree selection.
+    let revision: Revision | undefined;
+    if (treeSelection !== undefined && !treeSelection.isImmutable) {
+      revision = treeSelection;
+    } else {
+      revision = await pickRevision(ctx.repository.revisions, {
+        title: 'Split Revision',
+        placeholder: 'Select a mutable revision to split',
+        ...(treeSelection !== undefined ? { activeChangeId: treeSelection.changeId } : {}),
+        excludeImmutable: true,
+      });
+    }
+
+    if (revision === undefined) return;
+
+    // Fetch changed files in this revision.
+    const diffResult = await ctx.cli.diff({ changeId: revision.changeId, format: 'stat' });
+    if (!diffResult.ok) {
+      void vscode.window.showErrorMessage(
+        `Jujutsu: Could not list files for split — ${diffResult.error.message}`,
+      );
+      return;
+    }
+
+    const changedPaths = parseDiffStatPaths(diffResult.value);
+
+    if (changedPaths.length === 0) {
+      void vscode.window.showInformationMessage(
+        'Jujutsu: This revision has no file changes to split.',
+      );
+      return;
+    }
+
+    if (changedPaths.length === 1) {
+      void vscode.window.showInformationMessage(
+        'Jujutsu: This revision has only one changed file; split requires at least two.',
+      );
+      return;
+    }
+
+    // Multi-select QuickPick: choose files for the FIRST revision.
+    const fileItems = changedPaths.map((filePath) => ({
+      label: `$(file) ${filePath}`,
+      description: 'first revision',
+      filePath,
+      picked: false,
+    }));
+
+    const shortId = revision.changeId.substring(0, 12);
+    const picked = await vscode.window.showQuickPick(fileItems, {
+      title: `Split ${shortId} — Select files for the first revision`,
+      placeHolder: 'Choose which files go into the first revision (remaining go into the second)',
+      canPickMany: true,
+      ignoreFocusOut: true,
+    });
+
+    // undefined means the user pressed Escape.
+    if (picked === undefined) return;
+
+    if (picked.length === 0) {
+      void vscode.window.showWarningMessage(
+        'Jujutsu: No files selected. Select at least one file for the first revision.',
+      );
+      return;
+    }
+
+    if (picked.length === changedPaths.length) {
+      void vscode.window.showWarningMessage(
+        'Jujutsu: All files selected — nothing would remain for the second revision. ' +
+          'Deselect at least one file.',
+      );
+      return;
+    }
+
+    const selectedPaths = picked.map((item) => item.filePath);
+
+    // Optionally enter a description for the first revision.
+    const firstDescription = await vscode.window.showInputBox({
+      title: `Split ${shortId} — Description for first revision`,
+      prompt: 'Enter a description for the first revision (optional)',
+      placeHolder: '(press Enter to leave empty, Escape to cancel)',
+      ignoreFocusOut: true,
+    });
+
+    // undefined means the user pressed Escape.
+    if (firstDescription === undefined) return;
+
+    await ctx.service.run({ title: 'Split', showProgress: true }, (signal) =>
+      ctx.cli.split({
+        changeId: revision.changeId,
+        paths: selectedPaths,
+        ...(firstDescription.trim() !== '' ? { firstDescription: firstDescription.trim() } : {}),
+        signal,
+      }),
+    );
+  });
+}
+
+// ─── jjvs.revision.squash ────────────────────────────────────────────────────
+
+/**
+ * Register `jjvs.revision.squash`.
+ *
+ * Squashes a revision into a target ancestor, combining their changes into a
+ * single revision. The default target is the direct parent; the user can pick
+ * a different ancestor via `jj squash --into <target>`.
+ *
+ * ## Flow
+ *
+ * 1. Resolve the source revision (fast-path from tree selection if mutable).
+ * 2. Ask whether to squash into the direct parent or a specific ancestor.
+ *    - **Into parent**: runs immediately (most common case).
+ *    - **Into ancestor**: shows a second picker listing mutable ancestors.
+ * 3. Run `jj squash [-r <changeId>] [--into <target>]`.
+ */
+export function registerSquashRevisionCommand(
+  getContext: () => RevisionCommandContext | undefined,
+  revisionTreeView: vscode.TreeView<RevisionTreeItem | LoadMoreTreeItem>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('jjvs.revision.squash', async () => {
+    const ctx = getContext();
+    if (ctx === undefined) return;
+
+    const treeSelection = getTreeSelection(revisionTreeView);
+
+    // Step 1: Resolve source revision.
+    let source: Revision | undefined;
+    if (treeSelection !== undefined && !treeSelection.isImmutable) {
+      source = treeSelection;
+    } else {
+      source = await pickRevision(ctx.repository.revisions, {
+        title: 'Squash — Select Source',
+        placeholder: 'Select a mutable revision to squash',
+        ...(treeSelection !== undefined ? { activeChangeId: treeSelection.changeId } : {}),
+        excludeImmutable: true,
+      });
+    }
+
+    if (source === undefined) return;
+
+    const sourceShortId = source.changeId.substring(0, 12);
+
+    // Step 2: Pick target destination (parent or a specific ancestor).
+    const TARGET_PARENT = 'parent';
+    const TARGET_ANCESTOR = 'ancestor';
+    const destinationChoice = await vscode.window.showQuickPick(
+      [
+        {
+          label: '$(fold-down) Into parent',
+          description: 'Squash directly into the parent revision (default)',
+          id: TARGET_PARENT,
+        },
+        {
+          label: '$(fold-down) Into specific ancestor...',
+          description: 'Choose any mutable ancestor as the destination',
+          id: TARGET_ANCESTOR,
+        },
+      ],
+      {
+        title: `Squash ${sourceShortId} — Choose target`,
+        placeHolder: 'Select where to squash the changes',
+        ignoreFocusOut: true,
+      },
+    );
+
+    if (destinationChoice === undefined) return;
+
+    let intoChangeId: string | undefined;
+
+    if (destinationChoice.id === TARGET_ANCESTOR) {
+      // Show a picker for ancestors that are mutable and are not the source itself.
+      const ancestors = ctx.repository.revisions.filter(
+        (r) => !r.isImmutable && r.changeId !== source.changeId,
+      );
+
+      const target = await pickRevision(ancestors, {
+        title: `Squash ${sourceShortId} — Select ancestor target`,
+        placeholder: 'Select a mutable ancestor to squash into',
+      });
+
+      if (target === undefined) return;
+      intoChangeId = target.changeId;
+    }
+
+    const targetLabel =
+      intoChangeId !== undefined
+        ? `ancestor ${intoChangeId.substring(0, 12)}`
+        : 'its parent';
+
+    const confirm = await vscode.window.showWarningMessage(
+      `Squash ${sourceShortId} into ${targetLabel}?`,
+      { modal: true },
+      'Squash',
+    );
+
+    if (confirm !== 'Squash') return;
+
+    await ctx.service.run({ title: 'Squash', showProgress: true }, (signal) =>
+      ctx.cli.squash({
+        changeId: source.changeId,
+        // exactOptionalPropertyTypes: only pass `into` when an ancestor was chosen.
+        ...(intoChangeId !== undefined ? { into: intoChangeId } : {}),
+        signal,
+      }),
+    );
+  });
+}
+
+// ─── jjvs.revision.restore ───────────────────────────────────────────────────
+
+/**
+ * Register `jjvs.revision.restore`.
+ *
+ * Restores the file contents of a revision to match its parent, discarding all
+ * local changes. Runs `jj restore [--into <changeId>]`.
+ *
+ * Most commonly used on the working copy (`@`) to discard all uncommitted changes.
+ * Can also be invoked from the context menu on any mutable revision.
+ *
+ * Requires confirmation since restoring discards changes.
+ */
+export function registerRestoreRevisionCommand(
+  getContext: () => RevisionCommandContext | undefined,
+  revisionTreeView: vscode.TreeView<RevisionTreeItem | LoadMoreTreeItem>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('jjvs.revision.restore', async () => {
+    const ctx = getContext();
+    if (ctx === undefined) return;
+
+    const treeSelection = getTreeSelection(revisionTreeView);
+
+    let revision: Revision | undefined;
+    if (treeSelection !== undefined && !treeSelection.isImmutable) {
+      revision = treeSelection;
+    } else {
+      revision = await pickRevision(ctx.repository.revisions, {
+        title: 'Restore Revision',
+        placeholder: 'Select a mutable revision to restore to its parent state',
+        ...(treeSelection !== undefined ? { activeChangeId: treeSelection.changeId } : {}),
+        excludeImmutable: true,
+      });
+    }
+
+    if (revision === undefined) return;
+
+    const shortId = revision.changeId.substring(0, 12);
+    const subject = revision.isWorkingCopy
+      ? 'working copy (@)'
+      : `revision ${shortId}`;
+
+    const confirm = await vscode.window.showWarningMessage(
+      `Restore ${subject} to its parent state? This will discard all changes.`,
+      { modal: true },
+      'Restore',
+    );
+
+    if (confirm !== 'Restore') return;
+
+    await ctx.service.run({ title: 'Restore' }, (signal) =>
+      ctx.cli.restore({
+        // Use --into to restore a specific revision; omit for working copy (@).
+        ...(revision.isWorkingCopy ? {} : { changeId: revision.changeId }),
+        signal,
+      }),
+    );
+  });
+}
+
+// ─── jjvs.revision.absorb ────────────────────────────────────────────────────
+
+/**
+ * Register `jjvs.revision.absorb`.
+ *
+ * Absorbs changes from the working copy into the appropriate ancestor revisions.
+ * jj inspects each changed line and moves it into the ancestor that last touched
+ * that region. Only lines that can be unambiguously attributed to an ancestor are
+ * absorbed; the rest remain in the working copy.
+ *
+ * This is equivalent to `jj absorb` with no arguments.
+ */
+export function registerAbsorbCommand(
+  getContext: () => RevisionCommandContext | undefined,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('jjvs.revision.absorb', async () => {
+    const ctx = getContext();
+    if (ctx === undefined) return;
+
+    await ctx.service.run({ title: 'Absorb', showProgress: true }, (signal) =>
+      ctx.cli.absorb(signal),
+    );
+  });
+}
+
+// ─── jjvs.revision.revert ────────────────────────────────────────────────────
+
+/**
+ * Register `jjvs.revision.revert`.
+ *
+ * Creates a new revision whose changes are the exact inverse of the selected
+ * revision, effectively undoing that revision's changes in the working copy.
+ * The inverse revision is placed on top of the current working copy (`@`).
+ *
+ * This is equivalent to `jj revert -r <changeId> --onto @`.
+ *
+ * Note: Unlike `jj undo`, `revert` does not remove the original revision from
+ * history — it creates a NEW revision that cancels out the original's effect.
+ * Use the Operation Log's undo command to remove operations entirely.
+ */
+export function registerRevertRevisionCommand(
+  getContext: () => RevisionCommandContext | undefined,
+  revisionTreeView: vscode.TreeView<RevisionTreeItem | LoadMoreTreeItem>,
+): vscode.Disposable {
+  return vscode.commands.registerCommand('jjvs.revision.revert', async () => {
+    const ctx = getContext();
+    if (ctx === undefined) return;
+
+    const treeSelection = getTreeSelection(revisionTreeView);
+
+    const revision = await pickRevision(ctx.repository.revisions, {
+      title: 'Revert Revision',
+      placeholder: 'Select a revision to create an inverse of',
+      ...(treeSelection !== undefined ? { activeChangeId: treeSelection.changeId } : {}),
+    });
+
+    if (revision === undefined) return;
+
+    const shortId = revision.changeId.substring(0, 12);
+    const firstLine =
+      revision.description.trim() !== ''
+        ? `"${revision.description.trim().split('\n')[0]}"`
+        : '(no description)';
+
+    const confirm = await vscode.window.showWarningMessage(
+      `Create an inverse of ${shortId} ${firstLine} on top of the working copy?`,
+      { modal: true },
+      'Revert',
+    );
+
+    if (confirm !== 'Revert') return;
+
+    await ctx.service.run({ title: 'Revert', showProgress: true }, (signal) =>
+      ctx.cli.revert({
+        revsets: [revision.changeId],
+        destination: '@',
+        signal,
+      }),
     );
   });
 }
