@@ -342,7 +342,11 @@ jj revert -r <changeId> --onto @
 
 ---
 
-<!-- TODO(phase-9): add section on rebase -->
+## Rebasing a revision
+
+Use **Jujutsu: Rebase Revision...** to move a revision (or a subtree of revisions) to a
+new location in the DAG. For the full rebase workflow including source modes, placement
+options, and conflict handling, see the dedicated [Rebasing guide](rebasing.md).
 
 ---
 

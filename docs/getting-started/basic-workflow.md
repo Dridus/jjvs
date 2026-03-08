@@ -50,20 +50,16 @@ revision tree refreshes to show the new description.
 
 ## Step 4: Create a new revision
 
-To start working on a new, separate piece of work on top of your current revision, run
-`jj new` from the terminal:
+To start working on a new, separate piece of work on top of your current revision:
 
-```
-jj new
-```
+- **From the command palette**: Run **Jujutsu: New Revision...** (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+  and enter an optional description.
+- **From the Revisions view**: Click the **+** (Add) icon in the Revisions view toolbar.
+- **From the context menu**: Right-click any revision and choose **New Revision...**.
+- **From the terminal**: Run `jj new`.
 
-jjvs detects the change (via the op_heads watcher) and refreshes the views. The new
-empty revision becomes the working-copy revision (shown with `@`), and your previous
-revision is now a parent.
-
-Revision commands like `jj new`, `jj edit`, and `jj abandon` are planned as UI commands
-in Phase 7 and will be available from the Revisions view context menu and command palette.
-For now, run them from the integrated terminal.
+jjvs detects the change and refreshes the views automatically. The new empty revision becomes
+the working-copy revision (shown with `@`), and your previous revision is now a parent.
 
 ## Step 5: Filter the revision log with a revset
 
@@ -99,6 +95,8 @@ For a full explanation of revsets and the autocomplete system, see the
 
 ## What's next
 
+- [Revisions guide](../guides/revisions.md) — creating, editing, abandoning, splitting, and squashing revisions
 - [Revsets guide](../guides/revsets.md) — detailed explanation of the revset system and common patterns
+- [Bookmarks guide](../guides/bookmarks.md) — managing local and remote bookmarks
 - [Commands reference](../reference/commands.md) — all available commands
 - [Settings reference](../reference/settings.md) — customizing jjvs behavior

@@ -148,7 +148,8 @@ Position of the preview panel that shows `jj show` / `jj diff` output.
 | `"beside"` | Opens the panel to the right of the active editor |
 | `"below"` | Opens the panel below the active editor |
 
-The preview panel is available in Phase 13.
+See [Commands reference — jjvs.preview.show](commands.md#jjvspreviewshow) for details on
+the preview panel.
 
 ---
 
@@ -159,9 +160,8 @@ The preview panel is available in Phase 13.
 **Scope**: Window
 
 When `true`, the preview panel opens automatically when the extension activates. When
-`false`, you open it manually via a command.
-
-The preview panel is available in Phase 13.
+`false`, you open it manually via **Jujutsu: Show Preview Panel** or **Jujutsu: Toggle
+Preview Panel**.
 
 ---
 
@@ -205,4 +205,7 @@ Rendering style for the revision graph.
 | `"text"` | Graph shown as Unicode box-drawing characters in the tree view (fast, always available) |
 | `"webview"` | Interactive graphical webview with full DAG layout (richer UI, higher resource use) |
 
-The `"webview"` option is available in Phase 14. Use `"text"` until then.
+When `"webview"` is set, the graph panel opens automatically on activation. It can also
+be opened at any time with **Jujutsu: Show Revision Graph** or **Jujutsu: Toggle Revision
+Graph**. See [Commands reference — jjvs.graph.show](commands.md#jjvsgraphshow) for the full
+interaction guide including zoom, pan, and drag-and-drop rebase.

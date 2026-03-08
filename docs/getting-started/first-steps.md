@@ -13,21 +13,22 @@ Open a folder that contains a `.jj/` directory using **File → Open Folder**. j
 automatically when it detects a `.jj/` directory.
 
 For colocated repositories (those with both `.jj/` and `.git/` directories), jjvs detects
-the colocated state at startup and will surface git-specific operations when they become
-available in a later phase.
+the colocated state at startup and surfaces git-specific operations (push, fetch) and
+additional context keys for when-clause filtering.
 
 ## The UI layout
 
 ### Activity Bar: Jujutsu icon
 
 The Jujutsu icon in the Activity Bar (left sidebar) opens the **Jujutsu panel**, which
-contains three tree views stacked vertically:
+contains four tree views stacked vertically:
 
 | View | What it shows |
 |------|---------------|
 | **Revisions** | The revision log — your commit history as a navigable tree |
-| **Bookmarks** | Local and remote bookmarks *(available in Phase 10)* |
-| **Operation Log** | The jj operation history for undo/redo *(available in Phase 11)* |
+| **Bookmarks** | Local and remote bookmarks |
+| **Operation Log** | The jj operation history for undo/redo |
+| **Evolution Log** | Past snapshots of the selected revision (evolog) |
 
 ### The Revisions view
 
@@ -48,6 +49,26 @@ The working-copy revision (the one you are currently editing) is highlighted wit
 
 By default the view shows up to 50 revisions. A **Load more** item appears at the bottom
 if more revisions exist. You can change the limit with the `jjvs.logLimit` setting.
+
+### The Bookmarks view
+
+The **Bookmarks** view lists all local and remote bookmarks in the repository, grouped by
+whether they are local-only, remote-tracking, or tracked. Click a bookmark to select the
+revision it points to. Right-click for context menu actions: move, delete, forget, track,
+or untrack. For a full walkthrough, see the [Bookmarks guide](../guides/bookmarks.md).
+
+### The Operation Log view
+
+The **Operation Log** view shows the history of jj operations — every command that modified
+the repository creates an entry. Use this view to undo the last operation (`U` shortcut) or
+to restore the repository to an earlier operation state (press `Enter` on any entry). For
+details, see the [Operation log guide](../guides/operation-log.md).
+
+### The Evolution Log view
+
+The **Evolution Log** view shows all past snapshots of the currently selected revision's
+change ID. Each entry represents the state of the revision at a point in time — useful for
+understanding how a commit evolved through amends, rebases, and squashes.
 
 ### The Source Control view
 
@@ -79,9 +100,19 @@ editor. These show the diff against the parent revision's version of the file.
 Clicking a gutter indicator opens a diff hunk in the editor gutter, exactly as VSCode's
 built-in git diff integration works.
 
+### The Details view
+
+The **Jujutsu Details** view lives in the SCM sidebar (visible when the Source Control panel
+is open). When you select a revision in the Revisions view, the Details view shows all files
+changed in that revision with status icons (added, modified, deleted, renamed).
+
+Click a file in the Details view to open a diff editor. Right-click for additional options:
+restore file, squash file into parent, split file into a new revision, and show file history.
+
 ### The status bar
 
-jjvs does not yet add status bar items (planned for Phase 10). The Jujutsu output channel
+For colocated jj+git repositories, jjvs adds two status bar buttons: `$(cloud-upload)` for
+git push and `$(cloud-download)` for git fetch. The Jujutsu output channel
 (`View → Output → Jujutsu`) shows diagnostic information including the detected jj version
 and repository path.
 
@@ -102,4 +133,5 @@ a "new commit" message: editing it changes the description of the revision you a
 ## What's next
 
 - [Basic workflow](basic-workflow.md) — a guided walkthrough of viewing changes, describing work, and creating new revisions
+- [Revisions guide](../guides/revisions.md) — all revision commands: new, edit, abandon, split, squash, and more
 - [Revsets guide](../guides/revsets.md) — filtering the revision log with revset expressions

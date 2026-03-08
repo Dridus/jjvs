@@ -193,7 +193,7 @@ All bookmark operations go through jj's operation log, so they can be undone.
 From the Command Palette, run **Jujutsu: Undo Last Operation** after a bookmark
 change to roll back.
 
-<!-- TODO(phase-11): add direct link to operation log guide once Phase 11 is implemented -->
+For a full explanation of undo, see the [Operation log guide](operation-log.md#undoing-the-most-recent-operation).
 
 ---
 

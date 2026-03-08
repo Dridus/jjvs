@@ -56,7 +56,7 @@ Comprehensive user documentation is available in the [`docs/`](docs/) directory:
 
 - **[Getting Started](docs/getting-started/)** — Installation, first steps, and a guided basic workflow
 - **[Guides](docs/guides/)** — Task-oriented how-to articles for specific workflows (revisions, revsets,
-  bookmarks, rebasing, conflicts, git integration, operation log)
+  bookmarks, rebasing, conflicts, git integration, operation log, multi-root workspaces)
 - **[Reference](docs/reference/)** — Exhaustive lookup for all commands, settings, keyboard shortcuts,
   revset functions, and troubleshooting
 

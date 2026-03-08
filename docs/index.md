@@ -10,22 +10,24 @@ core jj workflow into VSCode's native UI paradigms.
 
 | Feature | Status |
 |---------|--------|
-| Revision log tree view | Available (Phase 6) |
-| SCM provider (Source Control view) | Available (Phase 5) |
-| Inline gutter diffs | Available (Phase 5) |
-| File decorations (modified/added/deleted/conflicted) | Available (Phase 5) |
-| Revset filtering with autocomplete | Available (Phase 6) |
-| Auto-refresh on repository changes | Available (Phase 4) |
-| Multi-repository workspace support | Available (Phase 4) |
-| Bookmarks tree view | Planned (Phase 10) |
-| Operation log tree view | Planned (Phase 11) |
-| Revision commands (new, edit, abandon, etc.) | Planned (Phase 7) |
-| Conflict handling | Planned (Phase 8) |
-| Rebase | Planned (Phase 9) |
-| Git push/fetch | Planned (Phase 10) |
-| Revision details view | Planned (Phase 12) |
-| Preview panel | Planned (Phase 13) |
-| Graph webview | Planned (Phase 14) |
+| Revision log tree view | Available |
+| SCM provider (Source Control view) | Available |
+| Inline gutter diffs | Available |
+| File decorations (modified/added/deleted/conflicted) | Available |
+| Revset filtering with autocomplete | Available |
+| Auto-refresh on repository changes | Available |
+| Multi-repository workspace support | Available |
+| Bookmarks tree view | Available |
+| Operation log tree view | Available |
+| Evolution log view | Available |
+| Revision commands (new, edit, abandon, split, squash, etc.) | Available |
+| Conflict handling | Available |
+| Rebase | Available |
+| Git push/fetch | Available |
+| Revision details view | Available |
+| File-level operations (restore, squash, split by file) | Available |
+| Preview panel | Available |
+| Revision graph webview | Available |
 
 ---
 
@@ -47,13 +49,13 @@ Step-by-step tutorials for new users:
 Task-oriented how-to articles for specific workflows:
 
 - [Revsets](guides/revsets.md) — filtering the revision log with revset expressions
-- [Revisions](guides/revisions.md) — creating, editing, abandoning, splitting, and squashing *(Phase 7)*
-- [Bookmarks](guides/bookmarks.md) — browsing and managing bookmarks *(Phase 10)*
-- [Rebasing](guides/rebasing.md) — rebase workflows *(Phase 9)*
-- [Conflicts](guides/conflicts.md) — understanding and resolving jj conflicts *(Phase 8)*
-- [Git integration](guides/git-integration.md) — push, fetch, colocated repos *(Phase 10)*
-- [Operation log](guides/operation-log.md) — undo, redo, restoring previous state *(Phase 11)*
-- [Multi-root workspaces](guides/multi-root-workspaces.md) — multiple repositories *(Phase 15)*
+- [Revisions](guides/revisions.md) — creating, editing, abandoning, splitting, and squashing
+- [Bookmarks](guides/bookmarks.md) — browsing and managing bookmarks
+- [Rebasing](guides/rebasing.md) — rebase workflows
+- [Conflicts](guides/conflicts.md) — understanding and resolving jj conflicts
+- [Git integration](guides/git-integration.md) — push, fetch, colocated repos
+- [Operation log](guides/operation-log.md) — undo, redo, restoring previous state
+- [Multi-root workspaces](guides/multi-root-workspaces.md) — multiple repositories
 
 ### Reference
 
@@ -62,6 +64,6 @@ Exhaustive lookup tables:
 - [Commands](reference/commands.md) — all registered commands with IDs and descriptions
 - [Settings](reference/settings.md) — all `jjvs.*` settings with types, defaults, and examples
 - [Revset functions](reference/revset-functions.md) — built-in revset functions with signatures
-- [Context keys](reference/context-keys.md) — when-clause context keys for keybinding customization *(Phase 15)*
-- [Keyboard shortcuts](reference/keyboard-shortcuts.md) — default keybindings *(Phase 7)*
-- [Troubleshooting](reference/troubleshooting.md) — common problems and solutions *(Phase 15)*
+- [Context keys](reference/context-keys.md) — when-clause context keys for keybinding customization
+- [Keyboard shortcuts](reference/keyboard-shortcuts.md) — default keybindings
+- [Troubleshooting](reference/troubleshooting.md) — common problems and solutions

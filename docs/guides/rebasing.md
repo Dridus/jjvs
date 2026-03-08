@@ -122,7 +122,7 @@ repository to the state before the rebase:
 1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
 2. Run **Jujutsu: Undo Last Operation**.
 
-<!-- TODO(phase-11): link to operation log guide when available -->
+For a full explanation of undo, see the [Operation log guide](operation-log.md#undoing-the-most-recent-operation).
 
 ---
 
