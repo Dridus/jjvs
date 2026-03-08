@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 11.
+Commands are verified against `package.json` contribution points as of Phase 12a.
 
 ---
 
@@ -601,3 +601,38 @@ Accessible from:
 Equivalent to: `jj op restore <operation-id>`
 
 For a usage walkthrough, see [Operation log guide](../guides/operation-log.md).
+
+---
+
+## jjvs.details.openDiff
+
+**Title**: Open Diff  
+**Category**: Jujutsu  
+**Icon**: `$(diff)`  
+**Enablement**: `jjvs:fileSelected`
+
+Opens a VSCode diff editor showing the changes to the selected file in the
+currently selected revision.
+
+The diff editor shows:
+- **Left (before)**: the file at the revision's parent
+- **Right (after)**: the file at the selected revision
+
+For **added** files, the left side is empty. For **deleted** files, the right
+side is empty. For **renamed** or **copied** files, the left side shows the
+original path.
+
+This command is invoked automatically when you click a file in the
+**Jujutsu Details** view. It can also be invoked from the context menu by
+right-clicking a file in the Details view.
+
+Accessible from:
+- Clicking any file in the **Jujutsu Details** view (SCM sidebar)
+- Details view context menu: right-click any file → **Open Diff**
+- Command palette (when a file is selected in the Details view)
+
+> **Note**: This command uses the same `jj-original:` URI scheme as the
+> QuickDiff gutter indicators. The content is served by the extension's
+> built-in `JjOriginalContentProvider`.
+
+<!-- TODO(phase-12b): add file-level split/squash/restore commands here -->

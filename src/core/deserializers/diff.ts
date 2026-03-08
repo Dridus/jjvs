@@ -3,7 +3,8 @@
  *
  * jj diff output formats:
  * 1. `jj diff --stat` — per-file summary with line change counts and visual bar.
- * 2. `jj diff` (default word-diff) or `jj diff --git` — full diff text for display.
+ * 2. `jj diff --summary` — per-file status letters (A/M/D/R/C) with paths.
+ * 3. `jj diff` (default word-diff) or `jj diff --git` — full diff text for display.
  *
  * Note on `addedLines` / `removedLines` accuracy from `--stat` output:
  * The `jj diff --stat` format shows a visual bar (`+++++--`) that represents the
@@ -19,7 +20,8 @@
  * Fixture: test/unit/fixtures/diff-stat.fixture.txt
  */
 
-import type { DiffStat } from '../types';
+import type { DiffStat, FileChange, FileStatus } from '../types';
+import { parseFileStatusChar } from './status';
 
 // ─── Diff stat parser ──────────────────────────────────────────────────────────
 
@@ -100,4 +102,88 @@ function countChar(str: string, char: string): number {
  */
 export function parseDiffStatPaths(stdout: string): readonly string[] {
   return parseDiffStat(stdout).map((entry) => entry.path);
+}
+
+// ─── Summary diff parser ──────────────────────────────────────────────────────
+
+/**
+ * Parse `jj diff --summary` text output into a `FileChange` array.
+ *
+ * Each line has one of the following formats (verified on jj 0.38.0):
+ * - `A <path>`          — file was added
+ * - `M <path>`          — file was modified
+ * - `D <path>`          — file was deleted
+ * - `R {<old> => <new>}` — file was renamed (curly-brace notation from jj)
+ * - `C {<old> => <new>}` — file was copied (curly-brace notation from jj)
+ *
+ * The curly-brace notation is how jj represents a single path component that
+ * changed: `R {old.ts => new.ts}` or `R {src/ => dst/}file.ts`.
+ * This parser normalises all R/C lines to a `FileChange` with `originalPath`.
+ *
+ * For R/C lines that do not match the expected braced format, the line is
+ * treated as a modified file rather than silently dropped, to avoid losing
+ * context on unexpected output.
+ *
+ * Empty input (no changes) returns an empty array.
+ */
+export function parseSummaryDiff(stdout: string): readonly FileChange[] {
+  const results: FileChange[] = [];
+
+  for (const line of stdout.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    if (trimmed.length < 3) continue;
+
+    const statusChar = trimmed[0];
+    // Status letter must be followed by a space.
+    if (trimmed[1] !== ' ') continue;
+
+    const rest = trimmed.slice(2);
+
+    if (statusChar === 'R' || statusChar === 'C') {
+      const fileChange = parseRenameOrCopyLine(statusChar === 'R' ? 'renamed' : 'copied', rest);
+      if (fileChange !== undefined) {
+        results.push(fileChange);
+      }
+      continue;
+    }
+
+    const status = parseFileStatusChar(statusChar);
+    if (status !== undefined) {
+      results.push({ path: rest, status });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Parse a rename or copy line from `jj diff --summary`.
+ *
+ * Handles the curly-brace format that jj uses to show path components that
+ * changed: `{old => new}` or `prefix/{old => new}/suffix`.
+ *
+ * Returns `undefined` when the line format is unrecognised, to degrade
+ * gracefully rather than emitting a malformed `FileChange`.
+ */
+function parseRenameOrCopyLine(
+  status: Extract<FileStatus, 'renamed' | 'copied'>,
+  rest: string,
+): FileChange | undefined {
+  // Try to find the `{<old> => <new>}` pattern anywhere in the line.
+  // jj may embed it mid-path: `dir/{old.ts => new.ts}` or as the full path.
+  const braceMatch = /^(.*)\{(.+?) => (.+?)\}(.*)$/.exec(rest);
+  if (braceMatch !== null) {
+    const prefix = braceMatch[1] ?? '';
+    const oldPart = braceMatch[2] ?? '';
+    const newPart = braceMatch[3] ?? '';
+    const suffix = braceMatch[4] ?? '';
+    const originalPath = `${prefix}${oldPart}${suffix}`;
+    const newPath = `${prefix}${newPart}${suffix}`;
+    return { path: newPath, status, originalPath };
+  }
+
+  // Fallback: treat as a simple path (no source info available).
+  // Avoids silently dropping the entry on unexpected jj output variants.
+  return { path: rest, status };
 }

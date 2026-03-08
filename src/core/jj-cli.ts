@@ -45,8 +45,14 @@ export interface LogOptions {
 export interface DiffOptions {
   /** The revision to diff. Defaults to `@`. */
   readonly changeId?: string;
-  /** Show diff in a specific format. Default is 'unified'. */
-  readonly format?: 'unified' | 'git' | 'stat';
+  /**
+   * Show diff in a specific format. Default is 'unified'.
+   * - `'summary'`: per-file status letters (A/M/D/R/C) — equivalent to `--summary` (`-s`)
+   * - `'stat'`: per-file line counts with a visual bar — equivalent to `--stat`
+   * - `'git'`: git-compatible unified diff — equivalent to `--git`
+   * - `'unified'`: jj's default word-diff format
+   */
+  readonly format?: 'unified' | 'git' | 'stat' | 'summary';
   readonly signal?: AbortSignal;
 }
 
@@ -464,6 +470,8 @@ export class JjCliImpl implements JjCli {
       args.push('--git');
     } else if (options?.format === 'stat') {
       args.push('--stat');
+    } else if (options?.format === 'summary') {
+      args.push('--summary');
     }
     return mapResult(await this.runner.run(args, options?.signal), (output) => output.stdout);
   }

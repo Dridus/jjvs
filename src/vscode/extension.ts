@@ -31,7 +31,11 @@ import { OutputChannelLogger } from './output-channel';
 import { FileWatcher } from './file-watcher';
 import { JjFileDecorationProvider } from './scm/decorations';
 import { JjvsSCMProvider } from './scm/provider';
-import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME } from './scm/quick-diff';
+import {
+  JjOriginalContentProvider,
+  JJ_ORIGINAL_SCHEME,
+  buildOriginalUri,
+} from './scm/quick-diff';
 import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
 import type { RevisionTreeItem } from './views/revisions/tree-items';
 import { RevsetSessionHistory, openRevsetInput } from './views/revisions/revset-input';
@@ -71,6 +75,8 @@ import {
   registerOpUndoCommand,
   registerOpRestoreCommand,
 } from './commands/op-log-commands';
+import { DetailsTreeProvider } from './views/details/tree-provider';
+import type { FileChangeTreeItem } from './views/details/tree-items';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -458,6 +464,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const revisionTreeProvider = new RevisionLogTreeProvider(configService.getLogLimit());
   context.subscriptions.push(revisionTreeProvider);
 
+  // Declared here so the revision selection handler (registered below) can
+  // propagate selections to the details view (Phase 12a) without a circular
+  // dependency. Assigned in the Phase 12a section.
+  let detailsTreeProvider: DetailsTreeProvider | undefined = undefined;
+
   const revsetHistory = new RevsetSessionHistory(context.globalState);
 
   /** Update the tree view description to reflect the active revset filter. */
@@ -484,13 +495,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   context.subscriptions.push(revisionTreeView);
 
-  // Update the revisionSelected context key when the tree selection changes.
+  // Update the revisionSelected context key when the tree selection changes,
+  // and propagate the selected revision to the details view (Phase 12).
   context.subscriptions.push(
     revisionTreeView.onDidChangeSelection((e) => {
       const selected = e.selection[0];
       const isRevisionItem =
         selected !== undefined && 'revision' in selected && selected.revision !== undefined;
       void setContextKey('revisionSelected', isRevisionItem);
+
+      // Propagate selection to the details view so it shows the correct files.
+      // detailsTreeProvider is assigned in the Phase 12a section below; the
+      // optional-chain guard handles the brief window before it is set.
+      detailsTreeProvider?.setRevision(
+        isRevisionItem ? (selected as RevisionTreeItem).revision : null,
+        repositoryManager.repositories[0] ?? null,
+      );
     }),
   );
 
@@ -694,7 +714,73 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     ),
   );
 
-  // Phase 12: register details view and file-level commands
+  // ── 12a. Revision details tree view ──────────────────────────────────────
+
+  detailsTreeProvider = new DetailsTreeProvider();
+  context.subscriptions.push(detailsTreeProvider);
+
+  const detailsTreeView = vscode.window.createTreeView('jjvs.details', {
+    treeDataProvider: detailsTreeProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(detailsTreeView);
+
+  // Update fileSelected context key when details tree selection changes.
+  context.subscriptions.push(
+    detailsTreeView.onDidChangeSelection((e) => {
+      const selected = e.selection[0];
+      const isFileItem =
+        selected !== undefined && 'fileChange' in selected && selected.fileChange !== undefined;
+      void setContextKey('fileSelected', isFileItem);
+    }),
+  );
+
+  // ── 12a. Details view commands ────────────────────────────────────────────
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'jjvs.details.openDiff',
+      async (item: FileChangeTreeItem) => {
+        if (item === undefined || item.fileChange === undefined) return;
+
+        const { fileChange, revision, rootPath } = item;
+        const parentChangeId = revision.parentChangeIds[0];
+
+        // For the diff, we need the file content at two revisions:
+        //   left  (before) = file at the parent revision
+        //   right (after)  = file at the selected revision
+        //
+        // Both sides use jj-original: URIs so the existing JjOriginalContentProvider
+        // handles the content fetch. If a file doesn't exist at a revision
+        // (e.g., newly added), fileShow returns an error and the provider
+        // returns '' → the diff shows an empty left side, which is correct.
+
+        const filePath =
+          fileChange.status === 'renamed' || fileChange.status === 'copied'
+            ? fileChange.originalPath ?? fileChange.path
+            : fileChange.path;
+
+        // Left side: file at the parent revision (or empty if the parent is the root).
+        const leftUri =
+          parentChangeId !== undefined
+            ? buildOriginalUri(rootPath, filePath, parentChangeId)
+            : // Root revision has no parent: show empty left side.
+              buildOriginalUri(rootPath, filePath, 'root()');
+
+        // Right side: file at the selected revision.
+        // For deletions the file won't exist at the revision — the provider
+        // returns '' for that case, giving a "deleted file" diff.
+        const rightUri = buildOriginalUri(rootPath, fileChange.path, revision.changeId);
+
+        const shortId = revision.changeId.substring(0, 12);
+        const fileName = fileChange.path.split('/').pop() ?? fileChange.path;
+        const title = `${fileName} (${shortId})`;
+
+        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
+      },
+    ),
+  );
+
   // Phase 13: register preview panel
   // Phase 14: register graph webview
 

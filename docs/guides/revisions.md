@@ -346,6 +346,33 @@ jj revert -r <changeId> --onto @
 
 ---
 
+## Viewing files changed in a revision
+
+The **Jujutsu Details** view (in the SCM sidebar) shows the files changed in
+the currently selected revision. Selecting a revision in the Revisions view
+updates the Details view automatically.
+
+Each file entry shows:
+- A status icon: green **A** (added), orange **M** (modified), red **D**
+  (deleted), or a copy/rename icon.
+- The filename as the primary label.
+- The directory path as faded secondary text.
+- For renamed or copied files: the original filename is shown after a `←`.
+
+**To open a diff for a file**, click the file in the Details view. This opens
+a VSCode diff editor with:
+- **Left (before)**: the file at the revision's parent
+- **Right (after)**: the file at the selected revision
+
+For **added** files the left side is empty; for **deleted** files the right
+side is empty.
+
+You can also right-click a file and choose **Open Diff** from the context menu.
+
+<!-- TODO(phase-12b): add file-level split/squash/restore section here -->
+
+---
+
 **Related**: [Commands reference](../reference/commands.md) |
 [Revsets guide](revsets.md) | [Bookmarks guide](bookmarks.md) |
 [Operation Log guide](operation-log.md)

@@ -8,7 +8,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { parseDiffStat, parseDiffStatPaths } from '../../../src/core/deserializers/diff';
+import {
+  parseDiffStat,
+  parseDiffStatPaths,
+  parseSummaryDiff,
+} from '../../../src/core/deserializers/diff';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -108,5 +112,132 @@ describe('parseDiffStatPaths', () => {
 
   it('returns empty array for empty input', () => {
     expect(parseDiffStatPaths('')).toHaveLength(0);
+  });
+});
+
+// ─── parseSummaryDiff ─────────────────────────────────────────────────────────
+//
+// The summary format produced by `jj diff --summary` (verified on jj 0.38.0):
+//
+//   A path/to/added-file.ts
+//   M path/to/modified-file.ts
+//   D path/to/deleted-file.ts
+//   R {old.ts => new.ts}
+//   C {original.ts => copy.ts}
+//
+// This fixture is constructed manually since the format is straightforward
+// text output rather than captured machine output.
+
+describe('parseSummaryDiff', () => {
+  it('parses added, modified, and deleted files', () => {
+    const input = [
+      'A src/new-file.ts',
+      'M src/existing.ts',
+      'D src/removed.ts',
+    ].join('\n');
+
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(3);
+    expect(result[0]).toEqual({ path: 'src/new-file.ts', status: 'added' });
+    expect(result[1]).toEqual({ path: 'src/existing.ts', status: 'modified' });
+    expect(result[2]).toEqual({ path: 'src/removed.ts', status: 'deleted' });
+  });
+
+  it('parses a rename with curly-brace notation (same directory)', () => {
+    const input = 'R {old-name.ts => new-name.ts}';
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      path: 'new-name.ts',
+      status: 'renamed',
+      originalPath: 'old-name.ts',
+    });
+  });
+
+  it('parses a rename with curly-brace notation (cross-directory)', () => {
+    const input = 'R {src/old.ts => dst/new.ts}';
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      path: 'dst/new.ts',
+      status: 'renamed',
+      originalPath: 'src/old.ts',
+    });
+  });
+
+  it('parses a rename with shared prefix (curly-brace mid-path)', () => {
+    // jj uses `dir/{old.ts => new.ts}` when only the filename changes
+    const input = 'R src/{old.ts => new.ts}';
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      path: 'src/new.ts',
+      status: 'renamed',
+      originalPath: 'src/old.ts',
+    });
+  });
+
+  it('parses a copy with curly-brace notation', () => {
+    const input = 'C {original.ts => copy.ts}';
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      path: 'copy.ts',
+      status: 'copied',
+      originalPath: 'original.ts',
+    });
+  });
+
+  it('parses a mixed changeset with multiple status types', () => {
+    const input = [
+      'A docs/new-guide.md',
+      'M src/core/types.ts',
+      'D src/old/legacy.ts',
+      'R {src/utils.ts => src/helpers.ts}',
+    ].join('\n');
+
+    const result = parseSummaryDiff(input);
+    expect(result).toHaveLength(4);
+    expect(result[0]).toMatchObject({ status: 'added', path: 'docs/new-guide.md' });
+    expect(result[1]).toMatchObject({ status: 'modified', path: 'src/core/types.ts' });
+    expect(result[2]).toMatchObject({ status: 'deleted', path: 'src/old/legacy.ts' });
+    expect(result[3]).toMatchObject({
+      status: 'renamed',
+      path: 'src/helpers.ts',
+      originalPath: 'src/utils.ts',
+    });
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(parseSummaryDiff('')).toHaveLength(0);
+    expect(parseSummaryDiff('\n\n')).toHaveLength(0);
+  });
+
+  it('skips lines that do not match the expected format', () => {
+    const input = [
+      'A valid-file.ts',
+      '  indented line should be skipped',
+      '',
+      'X unknown-status.ts',
+      'M another-valid.ts',
+    ].join('\n');
+
+    const result = parseSummaryDiff(input);
+    // 'X' is not a recognised status char, so only A and M lines are parsed.
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ status: 'added' });
+    expect(result[1]).toMatchObject({ status: 'modified' });
+  });
+
+  it('matches snapshot', () => {
+    const input = [
+      'A src/new-feature.ts',
+      'M src/core/types.ts',
+      'M src/vscode/extension.ts',
+      'D src/deprecated/old.ts',
+      'R {src/utils.ts => src/helpers.ts}',
+      'C {original.ts => copy.ts}',
+    ].join('\n');
+    expect(parseSummaryDiff(input)).toMatchSnapshot();
   });
 });

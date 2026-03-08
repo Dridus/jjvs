@@ -44,3 +44,34 @@ exports[`parseDiffStat > matches snapshot 1`] = `
   },
 ]
 `;
+
+exports[`parseSummaryDiff > matches snapshot 1`] = `
+[
+  {
+    "path": "src/new-feature.ts",
+    "status": "added",
+  },
+  {
+    "path": "src/core/types.ts",
+    "status": "modified",
+  },
+  {
+    "path": "src/vscode/extension.ts",
+    "status": "modified",
+  },
+  {
+    "path": "src/deprecated/old.ts",
+    "status": "deleted",
+  },
+  {
+    "originalPath": "src/utils.ts",
+    "path": "src/helpers.ts",
+    "status": "renamed",
+  },
+  {
+    "originalPath": "original.ts",
+    "path": "copy.ts",
+    "status": "copied",
+  },
+]
+`;
