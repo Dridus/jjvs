@@ -3,9 +3,24 @@
     computeLayout,
     type GraphRevision,
     type LayoutNode,
-    type LayoutEdge,
     type DagLayout,
   } from './dag-layout.js';
+  import {
+    COL_WIDTH,
+    ROW_HEIGHT,
+    NODE_RADIUS,
+    SVG_PADDING,
+    nodeX,
+    nodeY,
+    nodeAriaLabel,
+    type ContextMenuAction,
+    type ContextMenuState,
+    type DragState,
+  } from './graph-utils.js';
+  import GraphEdge from './components/GraphEdge.svelte';
+  import GraphNode from './components/GraphNode.svelte';
+  import ContextMenu from './components/ContextMenu.svelte';
+  import DragOverlay from './components/DragOverlay.svelte';
 
   // ── Type declarations ───────────────────────────────────────────────────────
 
@@ -19,45 +34,6 @@
       }
     | { readonly type: 'error'; readonly message: string }
     | { readonly type: 'selectRevision'; readonly changeId: string | null };
-
-  /** Actions the user can trigger from the context menu. */
-  type ContextMenuAction =
-    | 'edit'
-    | 'newAfter'
-    | 'describe'
-    | 'squash'
-    | 'rebase'
-    | 'abandon'
-    | 'copyChangeId'
-    | 'copyCommitId';
-
-  type ContextMenuState = {
-    readonly x: number;
-    readonly y: number;
-    readonly changeId: string;
-    readonly isImmutable: boolean;
-    readonly isWorkingCopy: boolean;
-  };
-
-  /**
-   * Active drag-rebase state.
-   *
-   * A drag is initiated by pressing and holding on a mutable revision node or
-   * row, then moving more than the drag threshold. Releasing over a valid
-   * (non-immutable, non-self) revision sends a `dragRebase` message to the
-   * extension host.
-   */
-  type DragState = {
-    readonly sourceChangeId: string;
-    /** Current cursor position in viewport coordinates. */
-    ghostX: number;
-    ghostY: number;
-    /**
-     * Change ID of the revision currently under the cursor (valid drop target),
-     * or null if no valid target is under the cursor.
-     */
-    targetChangeId: string | null;
-  };
 
   type ViewState = 'empty' | 'loading' | 'content' | 'error';
 
@@ -110,48 +86,10 @@
 
   const layout: DagLayout = $derived(computeLayout(revisions));
 
-  // ── Display constants ───────────────────────────────────────────────────────
-
-  /** Horizontal spacing between graph columns, in pixels. */
-  const COL_WIDTH = 18;
-  /** Vertical spacing between graph rows, in pixels. */
-  const ROW_HEIGHT = 32;
-  /** Radius of a revision node circle, in pixels. */
-  const NODE_RADIUS = 5;
-  /** Horizontal padding added on each side of the SVG. */
-  const SVG_PADDING = 4;
+  // ── Derived SVG dimensions ─────────────────────────────────────────────────
 
   const svgWidth = $derived((layout.maxColumn + 1) * COL_WIDTH + SVG_PADDING * 2);
   const svgHeight = $derived(Math.max(layout.nodes.length * ROW_HEIGHT, 1));
-
-  // ── Coordinate helpers ──────────────────────────────────────────────────────
-
-  function nodeX(col: number): number {
-    return SVG_PADDING + col * COL_WIDTH + COL_WIDTH / 2;
-  }
-
-  function nodeY(row: number): number {
-    return row * ROW_HEIGHT + ROW_HEIGHT / 2;
-  }
-
-  /**
-   * Build an SVG path `d` attribute for a parent-child edge.
-   *
-   * Edges between the same column are straight vertical lines. Edges between
-   * different columns use a symmetric cubic bezier that starts and ends
-   * vertically, with the inflection point at the midpoint between the two rows.
-   */
-  function edgePath(edge: LayoutEdge): string {
-    const x1 = nodeX(edge.fromColumn);
-    const y1 = nodeY(edge.fromRow);
-    const x2 = nodeX(edge.toColumn);
-    const y2 = nodeY(edge.toRow);
-    if (edge.fromColumn === edge.toColumn) {
-      return `M${x1},${y1} L${x2},${y2}`;
-    }
-    const midY = (y1 + y2) / 2;
-    return `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
-  }
 
   // ── Message handling ────────────────────────────────────────────────────────
 
@@ -305,7 +243,6 @@
       target.closest('.context-menu') !== null || target.closest('.zoom-toolbar') !== null;
 
     if (isOnOverlay) {
-      // Let overlay elements handle their own events.
       return;
     }
 
@@ -422,7 +359,6 @@
     if (dragState === null) return null;
     const elements = document.elementsFromPoint(clientX, clientY);
     for (const el of elements) {
-      // Skip the drag ghost and its children.
       if (el.closest('.drag-ghost') !== null) continue;
       const changeId = el.getAttribute('data-changeid');
       if (changeId === null) continue;
@@ -494,39 +430,6 @@
     }
   }
 
-  // ── Display helpers ─────────────────────────────────────────────────────────
-
-  function shortId(changeId: string): string {
-    return changeId.substring(0, 8);
-  }
-
-  function formatTimestamp(isoString: string): string {
-    try {
-      const diffMs = Date.now() - new Date(isoString).getTime();
-      if (diffMs < 60_000) return 'just now';
-      if (diffMs < 3_600_000) return `${Math.floor(diffMs / 60_000)}m ago`;
-      if (diffMs < 86_400_000) return `${Math.floor(diffMs / 3_600_000)}h ago`;
-      if (diffMs < 2_592_000_000) return `${Math.floor(diffMs / 86_400_000)}d ago`;
-      return new Date(isoString).toLocaleDateString();
-    } catch {
-      return '';
-    }
-  }
-
-  function firstLine(description: string): string {
-    const trimmed = description.trim();
-    if (trimmed === '') return '(no description)';
-    const nl = trimmed.indexOf('\n');
-    return nl >= 0 ? trimmed.substring(0, nl) : trimmed;
-  }
-
-  /** Accessible label for a graph node circle. */
-  function nodeAriaLabel(node: LayoutNode): string {
-    const prefix = node.revision.isWorkingCopy ? 'Working copy: ' : '';
-    const desc = firstLine(node.revision.description);
-    return `${prefix}${desc} (${shortId(node.revision.changeId)})`;
-  }
-
   // ── Derived ─────────────────────────────────────────────────────────────────
 
   const dropTargetChangeId = $derived(dragState?.targetChangeId ?? null);
@@ -579,7 +482,7 @@
         >
           <g class="edges">
             {#each layout.edges as edge (`${edge.childChangeId}-${edge.parentChangeId}`)}
-              <path class="edge" d={edgePath(edge)} />
+              <GraphEdge {edge} />
             {/each}
           </g>
           <g class="nodes">
@@ -620,60 +523,21 @@
 
           `data-changeid` attributes enable hit-testing during drag-rebase.
         -->
-        <!-- listbox/option roles allow aria-selected and tabindex on selectable rows -->
         <div class="revision-list" role="listbox" aria-label="Revisions">
           {#each layout.nodes as node (node.revision.changeId)}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-              class="revision-row"
-              class:selected={selectedChangeId === node.revision.changeId}
-              class:drop-target={dropTargetChangeId === node.revision.changeId}
-              class:drag-source={dragState?.sourceChangeId === node.revision.changeId}
-              style="height: {ROW_HEIGHT}px"
-              role="option"
-              aria-selected={selectedChangeId === node.revision.changeId}
-              tabindex="0"
-              data-changeid={node.revision.changeId}
+            <GraphNode
+              {node}
+              selected={selectedChangeId === node.revision.changeId}
+              isDropTarget={dropTargetChangeId === node.revision.changeId}
+              isDragSource={dragState?.sourceChangeId === node.revision.changeId}
               onclick={(e) => {
                 e.stopPropagation();
                 if (isDragComplete) { isDragComplete = false; return; }
                 selectRevision(node.revision.changeId);
               }}
               oncontextmenu={(e) => openContextMenu(e, node)}
-              onkeydown={(e) => {
-                if (e.key === 'Enter') selectRevision(node.revision.changeId);
-              }}
-            >
-              <!-- Bookmark and tag pills -->
-              <span class="rev-refs">
-                {#each node.revision.localBookmarks as bookmark}
-                  <span class="badge badge-bookmark" title="local bookmark: {bookmark}"
-                    >{bookmark}</span
-                  >
-                {/each}
-                {#each node.revision.remoteBookmarks as remote}
-                  <span class="badge badge-remote" title="remote bookmark: {remote}"
-                    >{remote}</span
-                  >
-                {/each}
-                {#each node.revision.tags as tag}
-                  <span class="badge badge-tag" title="tag: {tag}">{tag}</span>
-                {/each}
-              </span>
-
-              <!-- Short change ID -->
-              <span class="rev-id">{shortId(node.revision.changeId)}</span>
-
-              <!-- First line of description -->
-              <span class="rev-description" title={node.revision.description.trim()}>
-                {firstLine(node.revision.description)}
-              </span>
-
-              <!-- Author name and relative timestamp -->
-              <span class="rev-meta">
-                {node.revision.authorName} · {formatTimestamp(node.revision.authorTimestamp)}
-              </span>
-            </div>
+              onselect={() => selectRevision(node.revision.changeId)}
+            />
           {/each}
         </div>
       </div>
@@ -718,87 +582,12 @@
     </div>
   {/if}
 
-  <!--
-    Drag-rebase ghost indicator — follows the cursor during a drag gesture.
-    Positioned slightly above-right of the cursor to avoid obscuring the
-    element under the pointer. `pointer-events: none` ensures it does not
-    interfere with drop-target hit-testing via `document.elementsFromPoint`.
-  -->
   {#if dragState !== null}
-    <div
-      class="drag-ghost"
-      style="left: {dragState.ghostX + 14}px; top: {dragState.ghostY - 28}px"
-      aria-hidden="true"
-    >
-      {#if dragState.targetChangeId !== null}
-        <span class="drag-label drag-label-valid">
-          ↷ Rebase {shortId(dragState.sourceChangeId)} onto {shortId(dragState.targetChangeId)}
-        </span>
-      {:else}
-        <span class="drag-label">
-          ↷ {shortId(dragState.sourceChangeId)}…
-        </span>
-      {/if}
-    </div>
+    <DragOverlay drag={dragState} />
   {/if}
 
-  <!-- Custom context menu overlay (shown on right-click of a revision node or row) -->
   {#if contextMenu !== null}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div
-      class="context-menu"
-      style="left: {contextMenu.x}px; top: {contextMenu.y}px"
-      role="menu"
-      tabindex="-1"
-      onclick={(e) => e.stopPropagation()}
-    >
-      {#if !contextMenu.isWorkingCopy}
-        <button class="menu-item" role="menuitem" onclick={() => dispatchContextAction('edit')}>
-          Edit Revision
-        </button>
-      {/if}
-      <button class="menu-item" role="menuitem" onclick={() => dispatchContextAction('newAfter')}>
-        New Revision After…
-      </button>
-      {#if !contextMenu.isImmutable}
-        <button
-          class="menu-item"
-          role="menuitem"
-          onclick={() => dispatchContextAction('describe')}
-        >
-          Describe…
-        </button>
-        <button class="menu-item" role="menuitem" onclick={() => dispatchContextAction('squash')}>
-          Squash into Parent…
-        </button>
-        <button class="menu-item" role="menuitem" onclick={() => dispatchContextAction('rebase')}>
-          Rebase…
-        </button>
-        <hr class="menu-separator" />
-        <button
-          class="menu-item menu-item-destructive"
-          role="menuitem"
-          onclick={() => dispatchContextAction('abandon')}
-        >
-          Abandon
-        </button>
-        <hr class="menu-separator" />
-      {/if}
-      <button
-        class="menu-item"
-        role="menuitem"
-        onclick={() => dispatchContextAction('copyChangeId')}
-      >
-        Copy Change ID
-      </button>
-      <button
-        class="menu-item"
-        role="menuitem"
-        onclick={() => dispatchContextAction('copyCommitId')}
-      >
-        Copy Commit ID
-      </button>
-    </div>
+    <ContextMenu menu={contextMenu} onaction={dispatchContextAction} />
   {/if}
 </div>
 
@@ -826,7 +615,6 @@
     overflow: hidden;
     outline: none;
     position: relative;
-    /* Default cursor shows grab affordance on background areas. */
     cursor: grab;
   }
 
@@ -847,11 +635,8 @@
   /* ── Zoomable / pannable canvas ──────────────────────────────────────────── */
 
   .graph-canvas {
-    /* transform applied inline from zoom/panX/panY state */
     transform-origin: 0 0;
-    /* Prevent text selection during pan/drag gestures. */
     user-select: none;
-    /* Inline-block so the canvas sizes to its content (needed for transform). */
     display: inline-block;
     position: absolute;
     top: 0;
@@ -890,15 +675,6 @@
     display: block;
   }
 
-  /* ── SVG edges ───────────────────────────────────────────────────────────── */
-
-  .edge {
-    fill: none;
-    stroke: var(--vscode-foreground);
-    stroke-width: 1.5;
-    opacity: 0.3;
-  }
-
   /* ── SVG node circles ────────────────────────────────────────────────────── */
 
   .node {
@@ -913,7 +689,6 @@
     stroke-width: 2;
   }
 
-  /* Node type fills — ordered so .node-selected overrides the stroke below */
   .node-workingCopy {
     fill: var(--vscode-terminal-ansiYellow, #c5ac00);
   }
@@ -932,149 +707,27 @@
     stroke-width: 1.5;
   }
 
-  /* Selected state overrides the node-type stroke */
   .node-selected {
     stroke: var(--vscode-focusBorder, #007fd4);
     stroke-width: 2;
   }
 
-  /* Drag source: dimmed to indicate it is being moved. */
   .node-drag-source {
     opacity: 0.5;
   }
 
-  /* Drop target: pulsing ring to indicate a valid rebase destination. */
   .node-drop-target {
     stroke: var(--vscode-terminal-ansiYellow, #c5ac00);
     stroke-width: 3;
     filter: drop-shadow(0 0 3px var(--vscode-terminal-ansiYellow, #c5ac00));
   }
 
-  /* ── Revision info rows ──────────────────────────────────────────────────── */
+  /* ── Revision list container ─────────────────────────────────────────────── */
 
   .revision-list {
     flex: 1;
     overflow: hidden;
     min-width: 0;
-  }
-
-  .revision-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 8px 0 4px;
-    overflow: hidden;
-    white-space: nowrap;
-    border-left: 2px solid transparent;
-    user-select: none;
-    outline: none;
-  }
-
-  .revision-row:hover {
-    background: var(--vscode-list-hoverBackground);
-  }
-
-  .revision-row:focus {
-    background: var(--vscode-list-hoverBackground);
-    border-left-color: var(--vscode-focusBorder, #007fd4);
-  }
-
-  .revision-row.selected {
-    background: var(--vscode-list-activeSelectionBackground);
-    color: var(--vscode-list-activeSelectionForeground);
-    border-left-color: var(--vscode-focusBorder, #007fd4);
-  }
-
-  /* Drag source row: dimmed and dashed border to show it's being moved. */
-  .revision-row.drag-source {
-    opacity: 0.5;
-    border-left-color: var(--vscode-descriptionForeground, #8b8b8b);
-    border-left-style: dashed;
-  }
-
-  /* Drop target row: highlighted border to show it's a valid rebase destination. */
-  .revision-row.drop-target {
-    background: color-mix(
-      in srgb,
-      var(--vscode-terminal-ansiYellow, #c5ac00) 15%,
-      transparent
-    );
-    border-left-color: var(--vscode-terminal-ansiYellow, #c5ac00);
-    border-left-width: 3px;
-  }
-
-  /* ── Revision row content ────────────────────────────────────────────────── */
-
-  .rev-refs {
-    display: flex;
-    gap: 3px;
-    flex-shrink: 0;
-    align-items: center;
-  }
-
-  /* Hide the refs container entirely when it has no children */
-  .rev-refs:empty {
-    display: none;
-  }
-
-  .badge {
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 0.75em;
-    font-weight: 500;
-    white-space: nowrap;
-    line-height: 1.4;
-    /* Prevent badge text from being clipped during drag/pan. */
-    pointer-events: none;
-  }
-
-  .badge-bookmark {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #ffffff);
-  }
-
-  .badge-remote {
-    background: var(--vscode-badge-background, #4d4d4d);
-    color: var(--vscode-badge-foreground, #ffffff);
-    opacity: 0.75;
-  }
-
-  .badge-tag {
-    background: var(--vscode-terminal-ansiYellow, #c5ac00);
-    color: var(--vscode-editor-background);
-  }
-
-  .rev-id {
-    font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 0.85em;
-    color: var(--vscode-terminal-ansiCyan, #00bcd4);
-    flex-shrink: 0;
-  }
-
-  .revision-row.selected .rev-id {
-    color: var(--vscode-list-activeSelectionForeground);
-  }
-
-  .rev-description {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--vscode-foreground);
-  }
-
-  .revision-row.selected .rev-description {
-    color: var(--vscode-list-activeSelectionForeground);
-  }
-
-  .rev-meta {
-    font-size: 0.82em;
-    color: var(--vscode-descriptionForeground);
-    flex-shrink: 0;
-  }
-
-  .revision-row.selected .rev-meta {
-    color: var(--vscode-list-activeSelectionForeground);
-    opacity: 0.85;
   }
 
   /* ── Zoom toolbar ─────────────────────────────────────────────────────────── */
@@ -1093,7 +746,6 @@
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     z-index: 100;
-    /* Toolbar is not zoomable / pannable — it uses position: fixed. */
     cursor: default;
   }
 
@@ -1131,80 +783,5 @@
     min-width: 46px;
     font-variant-numeric: tabular-nums;
     font-size: 0.85em;
-  }
-
-  /* ── Drag-rebase ghost ───────────────────────────────────────────────────── */
-
-  .drag-ghost {
-    position: fixed;
-    pointer-events: none;
-    z-index: 200;
-    /* No background — just the text label with its own styling. */
-  }
-
-  .drag-label {
-    display: inline-block;
-    padding: 3px 8px;
-    background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border, #454545));
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    font-family: var(--vscode-editor-font-family, monospace);
-    font-size: 0.85em;
-    color: var(--vscode-foreground);
-    white-space: nowrap;
-    opacity: 0.9;
-  }
-
-  /* Valid drop target: green border + text to confirm the operation. */
-  .drag-label-valid {
-    border-color: var(--vscode-terminal-ansiGreen, #14a84b);
-    color: var(--vscode-terminal-ansiGreen, #14a84b);
-  }
-
-  /* ── Context menu ────────────────────────────────────────────────────────── */
-
-  .context-menu {
-    position: fixed;
-    background: var(--vscode-menu-background, var(--vscode-editor-background));
-    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border, #454545));
-    border-radius: 4px;
-    padding: 4px 0;
-    min-width: 180px;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    cursor: default;
-  }
-
-  .menu-item {
-    display: block;
-    width: 100%;
-    padding: 5px 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    color: var(--vscode-menu-foreground, var(--vscode-foreground));
-    font-family: var(--vscode-font-family, sans-serif);
-    font-size: var(--vscode-editor-font-size, 13px);
-    white-space: nowrap;
-  }
-
-  .menu-item:hover,
-  .menu-item:focus {
-    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
-    color: var(--vscode-menu-selectionForeground, var(--vscode-foreground));
-    outline: none;
-  }
-
-  .menu-item-destructive {
-    color: var(--vscode-terminal-ansiRed, #cd3131);
-  }
-
-  .menu-separator {
-    border: none;
-    border-top: 1px solid
-      var(--vscode-menu-separatorBackground, var(--vscode-panel-border, #454545));
-    margin: 4px 0;
   }
 </style>
