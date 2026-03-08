@@ -53,6 +53,11 @@
           "id": "jjvs.oplog",
           "name": "Operation Log",
           "when": "jjvs:hasRepository"
+        },
+        {
+          "id": "jjvs.evolog",
+          "name": "Evolution Log",
+          "when": "jjvs:hasRepository"
         }
       ],
       "scm": [
@@ -261,6 +266,34 @@
         "category": "Jujutsu",
         "icon": "$(diff)",
         "enablement": "jjvs:fileSelected"
+      },
+      {
+        "command": "jjvs.details.restoreFile",
+        "title": "Restore File...",
+        "category": "Jujutsu",
+        "icon": "$(discard)",
+        "enablement": "jjvs:fileSelected"
+      },
+      {
+        "command": "jjvs.details.squashFile",
+        "title": "Squash File into Parent",
+        "category": "Jujutsu",
+        "icon": "$(fold-down)",
+        "enablement": "jjvs:fileSelected"
+      },
+      {
+        "command": "jjvs.details.splitFile",
+        "title": "Split File into New Revision...",
+        "category": "Jujutsu",
+        "icon": "$(split-horizontal)",
+        "enablement": "jjvs:fileSelected"
+      },
+      {
+        "command": "jjvs.details.showFileHistory",
+        "title": "Show File History",
+        "category": "Jujutsu",
+        "icon": "$(history)",
+        "enablement": "jjvs:fileSelected"
       }
     ],
     "menus": {
@@ -438,6 +471,26 @@
           "command": "jjvs.details.openDiff",
           "when": "view == jjvs.details && viewItem =~ /^fileChange/",
           "group": "1_primary@1"
+        },
+        {
+          "command": "jjvs.details.restoreFile",
+          "when": "view == jjvs.details && viewItem =~ /^fileChange/ && viewItem =~ /mutable/",
+          "group": "2_file_ops@1"
+        },
+        {
+          "command": "jjvs.details.squashFile",
+          "when": "view == jjvs.details && viewItem =~ /^fileChange/ && viewItem =~ /mutable/",
+          "group": "2_file_ops@2"
+        },
+        {
+          "command": "jjvs.details.splitFile",
+          "when": "view == jjvs.details && viewItem =~ /^fileChange/ && viewItem =~ /mutable/",
+          "group": "2_file_ops@3"
+        },
+        {
+          "command": "jjvs.details.showFileHistory",
+          "when": "view == jjvs.details && viewItem =~ /^fileChange/",
+          "group": "3_history@1"
         }
       ]
     },

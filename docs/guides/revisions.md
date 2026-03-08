@@ -369,7 +369,105 @@ side is empty.
 
 You can also right-click a file and choose **Open Diff** from the context menu.
 
-<!-- TODO(phase-12b): add file-level split/squash/restore section here -->
+### File-level operations
+
+Right-clicking a file in the Details view reveals three additional file-specific
+operations that apply to just that one file rather than the entire revision:
+
+#### Restore File...
+
+Discards all changes to a single file in the revision, resetting it to the
+state it had in the revision's parent. Other files in the revision are
+unaffected.
+
+> **Warning**: Restore discards the file's changes. Use `jj op undo` in the
+> terminal if you need to recover via the operation log.
+
+1. Right-click a file in the Details view.
+2. Choose **Restore File...** from the context menu.
+3. Confirm the operation in the dialog.
+
+**What jjvs runs:**
+
+```
+jj restore [--into <changeId>] -- <filePath>
+```
+
+#### Squash File into Parent
+
+Squashes a single file's changes from the revision into its direct parent.
+After squashing, the file is no longer changed in the source revision — its
+changes now live in the parent.
+
+1. Right-click a file in the Details view.
+2. Choose **Squash File into Parent** from the context menu.
+3. Confirm the operation in the dialog.
+
+**What jjvs runs:**
+
+```
+jj squash -r <changeId> -- <filePath>
+```
+
+#### Split File into New Revision...
+
+Splits a single file out of a revision into a new separate revision. The file
+goes into a new first revision; the remaining files stay in the second
+(original) revision.
+
+This is the file-level equivalent of **Split Revision...** — useful when you
+have a large revision and want to extract one file's changes without touching
+anything else.
+
+1. Right-click a file in the Details view.
+2. Choose **Split File into New Revision...** from the context menu.
+3. Enter an optional description for the new first revision.
+
+**What jjvs runs:**
+
+```
+jj split -r <changeId> -- <filePath> [--message <description>]
+```
+
+---
+
+## Viewing a file's revision history
+
+Use **Show File History** to filter the Revisions view to show only revisions
+that modified a specific file.
+
+1. Right-click a file in the Details view.
+2. Choose **Show File History** from the context menu.
+
+The Revisions view is filtered to `file("<path>")` and the activity bar panel
+opens automatically. Use **Filter by Revset...** to clear or change the filter.
+
+**What jjvs runs:**
+
+Sets the Revisions view revset to `file("<path>")` (the `file()` revset function
+requires jj >= 0.25.0).
+
+---
+
+## Viewing how a revision evolved (Evolution Log)
+
+The **Evolution Log** view (in the Jujutsu activity bar panel) shows all past
+snapshots of the currently selected revision's change ID. Each snapshot
+represents the state of the revision at a point in time — for example, before
+and after an amend, rebase, or squash.
+
+Select a revision in the Revisions view to populate the Evolution Log. Entries
+are listed newest-first:
+
+- The **first entry** (the current state of the revision) shows a filled blue circle.
+- **Older entries** show an outline circle.
+- The relative timestamp shows when each snapshot was committed.
+
+This view is useful for understanding how a revision changed during development:
+how many times it was amended, what the description looked like before an edit,
+and so on.
+
+> **jj equivalent**: `jj evolog -r <changeId>`
 
 ---
 

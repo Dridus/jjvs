@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 12a.
+Commands are verified against `package.json` contribution points as of Phase 12b.
 
 ---
 
@@ -635,4 +635,92 @@ Accessible from:
 > QuickDiff gutter indicators. The content is served by the extension's
 > built-in `JjOriginalContentProvider`.
 
-<!-- TODO(phase-12b): add file-level split/squash/restore commands here -->
+---
+
+## jjvs.details.restoreFile
+
+**Title**: Restore File...  
+**Category**: Jujutsu  
+**Icon**: `$(discard)`  
+**Enablement**: `jjvs:fileSelected`
+
+Restores a single file in the selected revision to its state in the revision's
+parent, discarding that file's changes only. Other files in the revision are
+not affected.
+
+Requires confirmation before proceeding. The operation is the file-level
+equivalent of `jjvs.revision.restore`.
+
+Context menu: visible on mutable file change items in the Details view
+(`viewItem =~ /^fileChange/ && viewItem =~ /mutable/`)
+
+Equivalent to: `jj restore [--into <changeId>] -- <filePath>`
+
+For usage details, see [Revisions guide — File-level operations](../guides/revisions.md#file-level-operations).
+
+---
+
+## jjvs.details.squashFile
+
+**Title**: Squash File into Parent  
+**Category**: Jujutsu  
+**Icon**: `$(fold-down)`  
+**Enablement**: `jjvs:fileSelected`
+
+Squashes a single file's changes from the selected revision into its direct
+parent. After squashing, the file's changes live in the parent revision; the
+source revision no longer includes changes to that file.
+
+Requires confirmation before proceeding. The operation is the file-level
+equivalent of `jjvs.revision.squash`.
+
+Context menu: visible on mutable file change items in the Details view
+(`viewItem =~ /^fileChange/ && viewItem =~ /mutable/`)
+
+Equivalent to: `jj squash -r <changeId> -- <filePath>`
+
+For usage details, see [Revisions guide — File-level operations](../guides/revisions.md#file-level-operations).
+
+---
+
+## jjvs.details.splitFile
+
+**Title**: Split File into New Revision...  
+**Category**: Jujutsu  
+**Icon**: `$(split-horizontal)`  
+**Enablement**: `jjvs:fileSelected`
+
+Splits a single file out of the selected revision into a new separate revision.
+The selected file goes into a new first revision; remaining files stay in the
+second revision. The user is prompted for an optional description for the new
+first revision.
+
+The operation is the file-level equivalent of `jjvs.revision.split`.
+
+Context menu: visible on mutable file change items in the Details view
+(`viewItem =~ /^fileChange/ && viewItem =~ /mutable/`)
+
+Equivalent to: `jj split -r <changeId> -- <filePath> [--message <description>]`
+
+For usage details, see [Revisions guide — File-level operations](../guides/revisions.md#file-level-operations).
+
+---
+
+## jjvs.details.showFileHistory
+
+**Title**: Show File History  
+**Category**: Jujutsu  
+**Icon**: `$(history)`  
+**Enablement**: `jjvs:fileSelected`
+
+Filters the Revisions view to show only revisions that modified the selected
+file. Applies the `file("<path>")` revset function and navigates to the
+Revisions view automatically. Use **Filter by Revset...** to clear or update
+the filter.
+
+Context menu: visible on all file change items in the Details view
+(`viewItem =~ /^fileChange/`)
+
+Equivalent to: sets the Revisions view revset to `file("<path>")`
+
+For usage details, see [Revisions guide — Viewing a file's revision history](../guides/revisions.md#viewing-a-files-revision-history).

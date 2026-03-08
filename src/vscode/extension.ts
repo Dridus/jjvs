@@ -76,7 +76,15 @@ import {
   registerOpRestoreCommand,
 } from './commands/op-log-commands';
 import { DetailsTreeProvider } from './views/details/tree-provider';
+import type { DetailsTreeItem } from './views/details/tree-provider';
 import type { FileChangeTreeItem } from './views/details/tree-items';
+import { EvologTreeProvider } from './views/evolog/tree-provider';
+import {
+  registerRestoreFileCommand,
+  registerSquashFileCommand,
+  registerSplitFileCommand,
+  registerShowFileHistoryCommand,
+} from './commands/details-commands';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -465,9 +473,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(revisionTreeProvider);
 
   // Declared here so the revision selection handler (registered below) can
-  // propagate selections to the details view (Phase 12a) without a circular
-  // dependency. Assigned in the Phase 12a section.
+  // propagate selections to the details view (Phase 12a) and evolution log view
+  // (Phase 12b) without a circular dependency. Assigned in their respective sections.
   let detailsTreeProvider: DetailsTreeProvider | undefined = undefined;
+  let evologTreeProvider: EvologTreeProvider | undefined = undefined;
 
   const revsetHistory = new RevsetSessionHistory(context.globalState);
 
@@ -504,13 +513,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         selected !== undefined && 'revision' in selected && selected.revision !== undefined;
       void setContextKey('revisionSelected', isRevisionItem);
 
-      // Propagate selection to the details view so it shows the correct files.
-      // detailsTreeProvider is assigned in the Phase 12a section below; the
-      // optional-chain guard handles the brief window before it is set.
-      detailsTreeProvider?.setRevision(
-        isRevisionItem ? (selected as RevisionTreeItem).revision : null,
-        repositoryManager.repositories[0] ?? null,
-      );
+      // Propagate selection to the details view (Phase 12a) and evolution log
+      // view (Phase 12b). Both providers are assigned below; optional-chain
+      // guards handle the brief window before they are set.
+      const selectedRevision = isRevisionItem ? (selected as RevisionTreeItem).revision : null;
+      const activeRepo = repositoryManager.repositories[0] ?? null;
+      detailsTreeProvider?.setRevision(selectedRevision, activeRepo);
+      evologTreeProvider?.setRevision(selectedRevision, activeRepo);
     }),
   );
 
@@ -779,6 +788,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
       },
     ),
+  );
+
+  // ── 12b. Evolution log tree view ─────────────────────────────────────────
+
+  evologTreeProvider = new EvologTreeProvider();
+  context.subscriptions.push(evologTreeProvider);
+
+  const evologTreeView = vscode.window.createTreeView('jjvs.evolog', {
+    treeDataProvider: evologTreeProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(evologTreeView);
+
+  // ── 12b. File-level commands ──────────────────────────────────────────────
+
+  // Expose a callback so file-level commands can apply a revset filter to
+  // the Revisions tree without needing a direct reference to the tree provider.
+  const applyRevsetFilter = (revset: string): void => {
+    revisionTreeProvider.setRevsetFilter(revset !== '' ? revset : undefined);
+    updateRevisionTreeDescription();
+  };
+
+  // safe: detailsTreeView is created with DetailsTreeProvider whose items are DetailsTreeItem.
+  const typedDetailsTreeView = detailsTreeView as vscode.TreeView<DetailsTreeItem>;
+
+  context.subscriptions.push(
+    registerRestoreFileCommand(getActiveCommandContext, typedDetailsTreeView),
+    registerSquashFileCommand(getActiveCommandContext, typedDetailsTreeView),
+    registerSplitFileCommand(getActiveCommandContext, typedDetailsTreeView),
+    registerShowFileHistoryCommand(getActiveCommandContext, typedDetailsTreeView, applyRevsetFilter),
   );
 
   // Phase 13: register preview panel

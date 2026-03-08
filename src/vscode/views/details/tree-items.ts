@@ -18,7 +18,15 @@ import * as vscode from 'vscode';
 import * as path from 'node:path';
 import type { FileChange, FileStatus, Revision } from '../../../core/types';
 
-/** Context value base for file change items. Used in `view/item/context` when clauses. */
+/**
+ * Context value base for file change items. Used in `view/item/context` when clauses.
+ *
+ * Additional pipe-separated flags are appended:
+ * - `|mutable` — the containing revision is not immutable (file-level ops are available)
+ * - `|conflicted` — the file is in a conflicted state
+ *
+ * Example: `"fileChange|mutable"`, `"fileChange|mutable|conflicted"`, `"fileChange"`
+ */
 export const FILE_CHANGE_CONTEXT_BASE = 'fileChange';
 
 // ─── FileChangeTreeItem ───────────────────────────────────────────────────────
@@ -69,7 +77,7 @@ export class FileChangeTreeItem extends vscode.TreeItem {
     }
 
     this.iconPath = iconForStatus(fileChange.status);
-    this.contextValue = buildContextValue(fileChange);
+    this.contextValue = buildContextValue(fileChange, revision);
     this.tooltip = buildTooltip(fileChange);
 
     // Click to open diff.
@@ -156,14 +164,16 @@ function iconForStatus(status: FileStatus): vscode.ThemeIcon {
 /**
  * Builds a `contextValue` string for a file change item.
  *
- * Always starts with `"fileChange"`. Additional flags are appended for
- * conflict state so menu items can target conflicted files specifically.
+ * Always starts with `"fileChange"`. Additional pipe-separated flags are
+ * appended so `view/item/context` when-clauses can target specific states:
+ * - `mutable`: the containing revision is not immutable (enables file-level operations)
+ * - `conflicted`: the file is in a conflict state
  */
-function buildContextValue(fileChange: FileChange): string {
-  if (fileChange.status === 'conflicted') {
-    return `${FILE_CHANGE_CONTEXT_BASE}|conflicted`;
-  }
-  return FILE_CHANGE_CONTEXT_BASE;
+function buildContextValue(fileChange: FileChange, revision: Revision): string {
+  const parts: string[] = [FILE_CHANGE_CONTEXT_BASE];
+  if (!revision.isImmutable) parts.push('mutable');
+  if (fileChange.status === 'conflicted') parts.push('conflicted');
+  return parts.join('|');
 }
 
 /**
