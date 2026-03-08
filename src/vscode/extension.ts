@@ -28,6 +28,8 @@ import { RepositoryManager } from '../core/repository-manager';
 import { ConfigService } from './config';
 import { OutputChannelLogger } from './output-channel';
 import { FileWatcher } from './file-watcher';
+import { JjFileDecorationProvider } from './scm/decorations';
+import { JjvsSCMProvider } from './scm/provider';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -163,15 +165,57 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   };
 
+  // ── 5. SCM provider and file decorations ─────────────────────────────────
+
+  const decorationProvider = new JjFileDecorationProvider();
+  context.subscriptions.push(
+    vscode.window.registerFileDecorationProvider(decorationProvider),
+    decorationProvider,
+  );
+
+  const scmProviders = new Map<string, JjvsSCMProvider>();
+
+  const syncSCMProviders = (): void => {
+    const repoRoots = new Set(repositoryManager.repositories.map((r) => r.rootPath));
+
+    for (const repo of repositoryManager.repositories) {
+      if (!scmProviders.has(repo.rootPath)) {
+        const provider = new JjvsSCMProvider(repo, decorationProvider, logger);
+        scmProviders.set(repo.rootPath, provider);
+        logger.debug(`SCM provider registered for ${repo.rootPath}`);
+      }
+    }
+
+    for (const [rootPath, provider] of scmProviders) {
+      if (!repoRoots.has(rootPath)) {
+        provider.dispose();
+        scmProviders.delete(rootPath);
+        logger.debug(`SCM provider disposed for ${rootPath}`);
+      }
+    }
+  };
+
+  context.subscriptions.push({
+    dispose: () => {
+      for (const provider of scmProviders.values()) {
+        provider.dispose();
+      }
+      scmProviders.clear();
+    },
+  });
+
   // Update context keys when repositories change.
   // hasConflicts is derived from the most recently refreshed repo state.
-  repositoryManager.onDidChangeRepositories(() => {
-    const repos = repositoryManager.repositories;
-    void setContextKey('hasRepository', repos.length > 0);
-    void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
-    updateConflictContextKey();
-    syncFileWatchers();
-  });
+  context.subscriptions.push(
+    repositoryManager.onDidChangeRepositories(() => {
+      const repos = repositoryManager.repositories;
+      void setContextKey('hasRepository', repos.length > 0);
+      void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
+      updateConflictContextKey();
+      syncFileWatchers();
+      syncSCMProviders();
+    }),
+  );
 
   /** Re-evaluate hasConflicts across all known repositories. */
   const updateConflictContextKey = (): void => {
@@ -212,6 +256,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const workspacePaths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
   await repositoryManager.updateWorkspacePaths(workspacePaths);
   syncFileWatchers();
+  syncSCMProviders();
 
   // Subscribe to each repo's change events so hasConflicts stays current.
   for (const repo of repositoryManager.repositories) {
@@ -230,10 +275,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       const paths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
       await repositoryManager.updateWorkspacePaths(paths);
       syncFileWatchers();
+      syncSCMProviders();
     }),
   );
 
-  // Phase 5: register SCM provider
+  // Phase 5: SCM provider registered above (decorationProvider + syncSCMProviders)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.refresh', () => {
+      for (const repo of repositoryManager.repositories) {
+        void repo.refresh();
+      }
+    }),
+  );
+
   // Phase 6: register revision tree view and revset completion
   // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)
   // Phase 8: register conflict handling

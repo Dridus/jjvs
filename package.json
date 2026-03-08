@@ -63,8 +63,23 @@
         }
       ]
     },
-    "commands": [],
-    "menus": {},
+    "commands": [
+      {
+        "command": "jjvs.refresh",
+        "title": "Refresh",
+        "category": "Jujutsu",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "jjvs.refresh",
+          "when": "scmProvider == jjvs",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Jujutsu for VSCode",
       "properties": {
