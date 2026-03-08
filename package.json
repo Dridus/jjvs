@@ -76,6 +76,18 @@
         "category": "Jujutsu",
         "icon": "$(edit)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.revision.copyChangeId",
+        "title": "Copy Change ID",
+        "category": "Jujutsu",
+        "enablement": "jjvs:revisionSelected"
+      },
+      {
+        "command": "jjvs.revision.copyCommitId",
+        "title": "Copy Commit ID",
+        "category": "Jujutsu",
+        "enablement": "jjvs:revisionSelected"
       }
     ],
     "menus": {
@@ -84,6 +96,25 @@
           "command": "jjvs.refresh",
           "when": "scmProvider == jjvs",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "jjvs.refresh",
+          "when": "view == jjvs.revisions",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "jjvs.revision.copyChangeId",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "9_copy@1"
+        },
+        {
+          "command": "jjvs.revision.copyCommitId",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "9_copy@2"
         }
       ]
     },

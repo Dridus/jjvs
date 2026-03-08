@@ -115,6 +115,28 @@ export class RepositoryState implements Disposable {
     return this._lastError;
   }
 
+  // ── Log limit override ────────────────────────────────────────────────────
+
+  /**
+   * Overrides the log limit used for the next `jj log` fetch.
+   *
+   * The tree view's "Load more..." item calls this to increase the number of
+   * revisions fetched without requiring a full config reload. The new limit
+   * takes effect on the next `refresh()` call.
+   */
+  private _logLimitOverride: number | undefined = undefined;
+
+  /**
+   * Sets a one-time log limit override for pagination.
+   *
+   * Used by `RevisionLogTreeProvider.loadMore()` to fetch additional revisions
+   * beyond the default `logLimit` in the config. Once set, the override
+   * persists across subsequent refreshes (it is not a one-shot value).
+   */
+  updateLogLimit(limit: number): void {
+    this._logLimitOverride = limit;
+  }
+
   // ── Delegated CLI operations ───────────────────────────────────────────────
 
   /**
@@ -195,7 +217,7 @@ export class RepositoryState implements Disposable {
   private async doRefresh(signal: AbortSignal | undefined): Promise<void> {
     const logOptions = {
       ...(this.config.revset !== '' ? { revset: this.config.revset } : {}),
-      limit: this.config.logLimit,
+      limit: this._logLimitOverride ?? this.config.logLimit,
       ...(signal !== undefined ? { signal } : {}),
     };
 

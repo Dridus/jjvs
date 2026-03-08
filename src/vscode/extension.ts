@@ -31,6 +31,8 @@ import { FileWatcher } from './file-watcher';
 import { JjFileDecorationProvider } from './scm/decorations';
 import { JjvsSCMProvider } from './scm/provider';
 import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME } from './scm/quick-diff';
+import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
+import type { RevisionTreeItem } from './views/revisions/tree-items';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -340,7 +342,82 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
   }
 
-  // Phase 6: register revision tree view and revset completion
+  // ── 6. Revision log tree view ─────────────────────────────────────────────
+
+  const revisionTreeProvider = new RevisionLogTreeProvider(configService.getLogLimit());
+  context.subscriptions.push(revisionTreeProvider);
+
+  // Set the active repository from the first discovered repo (Phase 6a: single repo).
+  // When repositories change, update the provider so the view stays current.
+  const syncRevisionTree = (): void => {
+    const repos = repositoryManager.repositories;
+    revisionTreeProvider.setRepository(repos.length > 0 ? repos[0] : null);
+  };
+
+  const revisionTreeView = vscode.window.createTreeView('jjvs.revisions', {
+    treeDataProvider: revisionTreeProvider,
+    showCollapseAll: false,
+  });
+  context.subscriptions.push(revisionTreeView);
+
+  // Update the revisionSelected context key when the tree selection changes.
+  context.subscriptions.push(
+    revisionTreeView.onDidChangeSelection((e) => {
+      const selected = e.selection[0];
+      const isRevisionItem =
+        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
+      void setContextKey('revisionSelected', isRevisionItem);
+    }),
+  );
+
+  // Wire repository discovery to the revision tree.
+  context.subscriptions.push(
+    repositoryManager.onDidChangeRepositories(() => {
+      syncRevisionTree();
+    }),
+  );
+
+  syncRevisionTree();
+
+  // ── 6a. Revision view commands ────────────────────────────────────────────
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.revisions.loadMore', () => {
+      revisionTreeProvider.loadMore();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.revision.copyChangeId', () => {
+      const selected = revisionTreeView.selection[0];
+      if (selected === undefined || !('revision' in selected)) return;
+      // safe: the 'revision' in selected guard above confirms this is a RevisionTreeItem;
+      // TypeScript does not narrow class-instance union types via the `in` operator alone.
+      const item = selected as RevisionTreeItem;
+      void vscode.env.clipboard.writeText(item.revision.changeId).then(() => {
+        void vscode.window.showInformationMessage(
+          `Copied change ID: ${item.revision.changeId.substring(0, 12)}`,
+        );
+      });
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.revision.copyCommitId', () => {
+      const selected = revisionTreeView.selection[0];
+      if (selected === undefined || !('revision' in selected)) return;
+      // safe: the 'revision' in selected guard above confirms this is a RevisionTreeItem;
+      // TypeScript does not narrow class-instance union types via the `in` operator alone.
+      const item = selected as RevisionTreeItem;
+      void vscode.env.clipboard.writeText(item.revision.commitId).then(() => {
+        void vscode.window.showInformationMessage(
+          `Copied commit ID: ${item.revision.commitId.substring(0, 12)}`,
+        );
+      });
+    }),
+  );
+
+  // Phase 6b: register revset completion and filtering
   // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)
   // Phase 8: register conflict handling
   // Phase 9: register rebase command
