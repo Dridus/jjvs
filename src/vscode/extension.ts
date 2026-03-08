@@ -86,6 +86,7 @@ import {
   registerShowFileHistoryCommand,
 } from './commands/details-commands';
 import { PreviewPanelProvider } from './webview/preview/provider';
+import { GraphWebviewProvider } from './webview/graph/provider';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -870,7 +871,123 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     previewProvider.show();
   }
 
-  // Phase 14: register graph webview
+  // ── 14. Revision graph webview ────────────────────────────────────────────
+
+  const graphProvider = new GraphWebviewProvider(context, logger);
+  context.subscriptions.push(graphProvider);
+
+  /** Push the latest revision list (and current selection) to the graph panel. */
+  const syncGraph = (): void => {
+    const repo = repositoryManager.repositories[0] ?? null;
+    if (repo === null) {
+      graphProvider.setRevisions([], null);
+      return;
+    }
+    graphProvider.setRevisions(repo.revisions, graphProvider.selectedChangeId);
+  };
+
+  // Subscribe to the initial set of repository change events.
+  for (const repo of repositoryManager.repositories) {
+    context.subscriptions.push(repo.onDidChange(() => syncGraph()));
+  }
+
+  // When the workspace changes (repos added/removed), re-subscribe and re-sync.
+  context.subscriptions.push(
+    repositoryManager.onDidChangeRepositories(() => {
+      syncGraph();
+      for (const repo of repositoryManager.repositories) {
+        context.subscriptions.push(repo.onDidChange(() => syncGraph()));
+      }
+    }),
+  );
+
+  // When the revisions tree selection changes, keep the graph highlight in sync.
+  context.subscriptions.push(
+    revisionTreeView.onDidChangeSelection((e) => {
+      const selected = e.selection[0];
+      const isRevisionItem =
+        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
+      const changeId = isRevisionItem ? (selected as RevisionTreeItem).revision.changeId : null;
+      graphProvider.setSelectedRevision(changeId);
+    }),
+  );
+
+  // When the user clicks a graph node, propagate the selection to all other views.
+  context.subscriptions.push(
+    graphProvider.onDidSelectRevision((changeId) => {
+      const repo = repositoryManager.repositories[0] ?? null;
+      const revision = repo?.revisions.find((r) => r.changeId === changeId) ?? null;
+      detailsTreeProvider?.setRevision(revision, repo);
+      evologTreeProvider?.setRevision(revision, repo);
+      previewProvider.setRevision(revision, repo);
+      void setContextKey('revisionSelected', revision !== null);
+    }),
+  );
+
+  // When the user triggers a context menu action in the graph, execute the
+  // corresponding jjvs command. Complex commands (rebase, squash) show their
+  // standard pickers. Copy actions are handled directly with the changeId.
+  context.subscriptions.push(
+    graphProvider.onDidContextMenuAction(({ changeId, action }) => {
+      switch (action) {
+        case 'copyChangeId':
+          void vscode.env.clipboard
+            .writeText(changeId)
+            .then(() =>
+              vscode.window.showInformationMessage(
+                `Copied change ID: ${changeId.substring(0, 12)}`,
+              ),
+            );
+          break;
+        case 'copyCommitId': {
+          const repo = repositoryManager.repositories[0];
+          const revision = repo?.revisions.find((r) => r.changeId === changeId);
+          if (revision !== undefined) {
+            void vscode.env.clipboard
+              .writeText(revision.commitId)
+              .then(() =>
+                vscode.window.showInformationMessage(
+                  `Copied commit ID: ${revision.commitId.substring(0, 12)}`,
+                ),
+              );
+          }
+          break;
+        }
+        case 'edit':
+          void vscode.commands.executeCommand('jjvs.revision.edit');
+          break;
+        case 'newAfter':
+          void vscode.commands.executeCommand('jjvs.revision.new');
+          break;
+        case 'describe':
+          void vscode.commands.executeCommand('jjvs.revision.describe');
+          break;
+        case 'squash':
+          void vscode.commands.executeCommand('jjvs.revision.squash');
+          break;
+        case 'rebase':
+          void vscode.commands.executeCommand('jjvs.rebase');
+          break;
+        case 'abandon':
+          void vscode.commands.executeCommand('jjvs.revision.abandon');
+          break;
+        default: {
+          const _exhaustive: never = action;
+          void _exhaustive;
+        }
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.graph.show', () => graphProvider.show()),
+    vscode.commands.registerCommand('jjvs.graph.toggle', () => graphProvider.toggle()),
+  );
+
+  // Auto-open on start when graphStyle is set to 'webview' and a repo exists.
+  if (configService.graphStyle === 'webview' && repositoryManager.repositories.length > 0) {
+    graphProvider.show();
+  }
 
   // Expose capabilities so later phases can gate features at registration time.
   // Usage: `if (capabilities?.hasJsonTemplate) { ... }`

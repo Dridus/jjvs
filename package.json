@@ -308,6 +308,20 @@
         "category": "Jujutsu",
         "icon": "$(preview)",
         "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.graph.show",
+        "title": "Show Revision Graph",
+        "category": "Jujutsu",
+        "icon": "$(type-hierarchy)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.graph.toggle",
+        "title": "Toggle Revision Graph",
+        "category": "Jujutsu",
+        "icon": "$(type-hierarchy)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -366,6 +380,11 @@
         },
         {
           "command": "jjvs.preview.toggle",
+          "when": "view == jjvs.revisions && jjvs:hasRepository",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.graph.toggle",
           "when": "view == jjvs.revisions && jjvs:hasRepository",
           "group": "navigation"
         }

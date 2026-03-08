@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 13.
+Commands are verified against `package.json` contribution points as of Phase 14a.
 
 ---
 
@@ -765,3 +765,53 @@ Accessible from:
 - Revisions view toolbar (preview icon)
 
 For configuration details, see [Settings reference](settings.md#jjvspreviewposition).
+
+---
+
+## jjvs.graph.show
+
+**Title**: Show Revision Graph  
+**Category**: Jujutsu  
+**Icon**: `$(type-hierarchy)`  
+**Enablement**: `jjvs:hasRepository`
+
+Opens the Jujutsu Revision Graph webview panel, which displays the revision DAG
+as an interactive SVG graph. Each revision appears as a colored circle connected
+to its parents by smooth bezier curves. The color indicates the revision type:
+
+| Color  | Node type     |
+|--------|---------------|
+| Yellow | Working copy  |
+| Red    | Conflicted    |
+| Blue   | Immutable     |
+| Green  | Mutable       |
+| Outline| Empty         |
+
+If the panel is already open, reveals it without stealing focus.
+
+**Interaction:**
+- Click a revision node or row to select it. The selection synchronizes with the
+  Details, Evolution Log, and Preview panels.
+- Right-click a node or row to open a context menu with revision actions.
+- `↑`/`↓` arrow keys move the selection up and down the revision list.
+
+Accessible from:
+- Command palette: **Jujutsu: Show Revision Graph**
+
+To auto-open this panel on activation, set `jjvs.graphStyle` to `"webview"`.
+See [Settings reference](settings.md#jjvsgraphstyle).
+
+---
+
+## jjvs.graph.toggle
+
+**Title**: Toggle Revision Graph  
+**Category**: Jujutsu  
+**Icon**: `$(type-hierarchy)`  
+**Enablement**: `jjvs:hasRepository`
+
+Opens the graph panel if it is closed, or closes it if it is currently open.
+
+Accessible from:
+- Command palette: **Jujutsu: Toggle Revision Graph**
+- Revisions view toolbar (graph icon)

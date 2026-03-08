@@ -55,17 +55,17 @@ const webviewBundleOptions = [
     minify: isProduction,
     plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
   },
-  // Phase 14: graph webview (placeholder — entry point not yet created)
-  // {
-  //   entryPoints: ['webview-ui/graph/main.ts'],
-  //   bundle: true,
-  //   format: 'esm',
-  //   platform: 'browser',
-  //   outdir: 'dist/webviews/graph',
-  //   sourcemap: !isProduction,
-  //   minify: isProduction,
-  //   plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
-  // },
+  // Phase 14: graph webview
+  {
+    entryPoints: ['webview-ui/graph/main.ts'],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    outdir: 'dist/webviews/graph',
+    sourcemap: !isProduction,
+    minify: isProduction,
+    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
+  },
 ];
 
 async function build() {

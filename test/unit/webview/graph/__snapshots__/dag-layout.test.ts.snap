@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`computeLayout > produces a snapshot for a typical branching graph 1`] = `
+[
+  {
+    "col": 0,
+    "id": "wc",
+    "row": 0,
+    "type": "workingCopy",
+  },
+  {
+    "col": 0,
+    "id": "feat-2",
+    "row": 1,
+    "type": "mutable",
+  },
+  {
+    "col": 0,
+    "id": "feat-1",
+    "row": 2,
+    "type": "mutable",
+  },
+  {
+    "col": 0,
+    "id": "main-2",
+    "row": 3,
+    "type": "mutable",
+  },
+  {
+    "col": 0,
+    "id": "main-1",
+    "row": 4,
+    "type": "immutable",
+  },
+]
+`;
+
+exports[`computeLayout > produces a snapshot for a typical branching graph 2`] = `
+[
+  {
+    "from": "wc",
+    "fromCol": 0,
+    "fromRow": 0,
+    "to": "feat-2",
+    "toCol": 0,
+    "toRow": 1,
+  },
+  {
+    "from": "feat-2",
+    "fromCol": 0,
+    "fromRow": 1,
+    "to": "feat-1",
+    "toCol": 0,
+    "toRow": 2,
+  },
+  {
+    "from": "feat-1",
+    "fromCol": 0,
+    "fromRow": 2,
+    "to": "main-2",
+    "toCol": 0,
+    "toRow": 3,
+  },
+  {
+    "from": "main-2",
+    "fromCol": 0,
+    "fromRow": 3,
+    "to": "main-1",
+    "toCol": 0,
+    "toRow": 4,
+  },
+]
+`;
