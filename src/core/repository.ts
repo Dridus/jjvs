@@ -25,7 +25,9 @@
  * - `CommandService` (Phase 7) uses `withMutation()` to serialize commands.
  */
 
-import type { JjCli } from './jj-cli';
+import type { JjCli, DescribeOptions } from './jj-cli';
+import type { JjError } from './jj-runner';
+import type { Result } from './result';
 import type { Revision, WorkingCopyStatus, RepoKind } from './types';
 import { TypedEventEmitter, type Disposable } from './event-emitter';
 
@@ -111,6 +113,32 @@ export class RepositoryState implements Disposable {
   /** The most recent error message, if the last refresh failed. */
   get lastError(): string | undefined {
     return this._lastError;
+  }
+
+  // ── Delegated CLI operations ───────────────────────────────────────────────
+
+  /**
+   * Set the description of a revision.
+   *
+   * Delegates to `JjCli.describe`. Phase 7 will wrap this and other mutation
+   * methods in a `withMutation()` command-lock guard.
+   */
+  describe(options: DescribeOptions): Promise<Result<void, JjError>> {
+    return this.cli.describe(options);
+  }
+
+  /**
+   * Get the raw content of a file at a specific revision.
+   *
+   * Delegates to `JjCli.fileShow`. Returns an error result if the file does
+   * not exist at the requested revision (e.g., newly-added files at `@-`).
+   */
+  fileShow(
+    relativePath: string,
+    revset: string,
+    signal?: AbortSignal,
+  ): Promise<Result<string, JjError>> {
+    return this.cli.fileShow(relativePath, revset, signal);
   }
 
   // ── Refresh ────────────────────────────────────────────────────────────────

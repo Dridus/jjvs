@@ -30,6 +30,7 @@ import { OutputChannelLogger } from './output-channel';
 import { FileWatcher } from './file-watcher';
 import { JjFileDecorationProvider } from './scm/decorations';
 import { JjvsSCMProvider } from './scm/provider';
+import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME } from './scm/quick-diff';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -173,6 +174,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     decorationProvider,
   );
 
+  // Register the content provider that serves `jj-original:` URIs for inline
+  // gutter diffs. A single global instance handles all repositories; the
+  // rootPath encoded in each URI's query determines which repo to query.
+  const originalContentProvider = new JjOriginalContentProvider((filePath) =>
+    repositoryManager.getRepositoryForPath(filePath),
+  );
+  context.subscriptions.push(
+    vscode.workspace.registerTextDocumentContentProvider(
+      JJ_ORIGINAL_SCHEME,
+      originalContentProvider,
+    ),
+    originalContentProvider,
+  );
+
   const scmProviders = new Map<string, JjvsSCMProvider>();
 
   const syncSCMProviders = (): void => {
@@ -288,6 +303,42 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     }),
   );
+
+  // Called by the SCM input box ✓ button (acceptInputCommand). The rootPath
+  // argument is pre-bound in JjvsSCMProvider.acceptInputCommand.arguments so
+  // we know which SCM provider (and repository) to act on.
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'jjvs.describeWorkingCopy',
+      (rootPath?: string) => {
+        const provider =
+          rootPath !== undefined
+            ? scmProviders.get(rootPath)
+            : // Fallback: use the first provider if there is exactly one repo.
+              scmProviders.size === 1
+              ? [...scmProviders.values()][0]
+              : undefined;
+
+        if (provider === undefined) {
+          logger.warn(
+            `jjvs.describeWorkingCopy: no SCM provider found for rootPath=${rootPath ?? '(none)'}`,
+          );
+          return;
+        }
+
+        void provider.executeDescribe();
+      },
+    ),
+  );
+
+  // Invalidate original-content URIs after each repository refresh so that
+  // gutter indicators update when the parent revision changes (e.g., after
+  // rebase or squash).
+  for (const repo of repositoryManager.repositories) {
+    context.subscriptions.push(
+      repo.onDidChange(() => originalContentProvider.invalidateRepository(repo.rootPath)),
+    );
+  }
 
   // Phase 6: register revision tree view and revset completion
   // Phase 7: register revision commands (also wire FileWatcher.suppressNextChange to CommandService)

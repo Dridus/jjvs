@@ -69,6 +69,13 @@
         "title": "Refresh",
         "category": "Jujutsu",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "jjvs.describeWorkingCopy",
+        "title": "Describe Working Copy",
+        "category": "Jujutsu",
+        "icon": "$(edit)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {

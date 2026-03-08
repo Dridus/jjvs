@@ -587,6 +587,20 @@ describe('JjCliImpl — mutating command argument construction', () => {
     await cli.absorb();
     expect(runner.calls[0]).toEqual(['absorb']);
   });
+
+  it('fileShow — passes revset and path with double-dash separator', async () => {
+    runner.succeed('file', 'file contents\n');
+    const result = await cli.fileShow('src/main.ts', '@-');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value).toBe('file contents\n');
+    expect(runner.calls[0]).toEqual(['file', 'show', '-r', '@-', '--', 'src/main.ts']);
+  });
+
+  it('fileShow — returns error result for non-existent file at revision', async () => {
+    runner.fail('file', { kind: 'non-zero-exit', message: 'No such path', exitCode: 1, stdout: '', stderr: '' });
+    const result = await cli.fileShow('new-file.ts', '@-');
+    expect(result.ok).toBe(false);
+  });
 });
 
 describe('JjCliImpl — error propagation', () => {

@@ -293,6 +293,22 @@ export interface JjCli {
    */
   version(signal?: AbortSignal): Promise<Result<JjVersion, JjError>>;
 
+  /**
+   * Get the raw content of a file at a specific revision.
+   * Equivalent to `jj file show -r <revset> -- <relativePath>`.
+   *
+   * Returns an error result (non-zero-exit) if the file does not exist at the
+   * requested revision (e.g., for newly-added files the path won't exist at
+   * the parent revision `@-`). Callers should treat this as "empty original".
+   *
+   * Requires jj >= 0.25.0.
+   */
+  fileShow(
+    relativePath: string,
+    revset: string,
+    signal?: AbortSignal,
+  ): Promise<Result<string, JjError>>;
+
   // ── Mutating revision operations ─────────────────────────────────────────
 
   /**
@@ -482,6 +498,17 @@ export class JjCliImpl implements JjCli {
     return mapResult(
       await this.runner.run(['config', 'get', key], signal),
       (output) => output.stdout.trim(),
+    );
+  }
+
+  async fileShow(
+    relativePath: string,
+    revset: string,
+    signal?: AbortSignal,
+  ): Promise<Result<string, JjError>> {
+    return mapResult(
+      await this.runner.run(['file', 'show', '-r', revset, '--', relativePath], signal),
+      (output) => output.stdout,
     );
   }
 
