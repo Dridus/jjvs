@@ -50,6 +50,7 @@ import {
   registerRevertRevisionCommand,
 } from './commands/revision-commands';
 import { registerResolveConflictCommand } from './commands/conflict-commands';
+import { registerRebaseCommand } from './commands/rebase-commands';
 import { ConflictStatusBar } from './status-bar';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
@@ -578,7 +579,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerResolveConflictCommand(getActiveCommandContext, revisionTreeView, configService.jjPath),
   );
 
-  // Phase 9: register rebase command
+  // Phase 9: rebase command
+  context.subscriptions.push(registerRebaseCommand(getActiveCommandContext, revisionTreeView));
   // Phase 10: register bookmarks tree and git commands
   // Phase 11: register op log tree and undo/redo
   // Phase 12: register details view and file-level commands

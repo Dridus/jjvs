@@ -179,6 +179,13 @@
         "category": "Jujutsu",
         "icon": "$(tools)",
         "enablement": "jjvs:hasConflicts"
+      },
+      {
+        "command": "jjvs.rebase",
+        "title": "Rebase Revision...",
+        "category": "Jujutsu",
+        "icon": "$(git-merge)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -268,6 +275,11 @@
           "group": "1_primary@3"
         },
         {
+          "command": "jjvs.rebase",
+          "when": "view == jjvs.revisions && viewItem =~ /^revision/",
+          "group": "2_modify@8"
+        },
+        {
           "command": "jjvs.revision.copyChangeId",
           "when": "view == jjvs.revisions && viewItem =~ /^revision/",
           "group": "9_copy@1"
@@ -314,6 +326,11 @@
         "key": "r",
         "command": "jjvs.conflict.resolve",
         "when": "focusedView == 'jjvs.revisions' && jjvs:hasConflicts"
+      },
+      {
+        "key": "b",
+        "command": "jjvs.rebase",
+        "when": "focusedView == 'jjvs.revisions' && jjvs:hasRepository && jjvs:revisionSelected"
       }
     ],
     "configuration": {

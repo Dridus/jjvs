@@ -15,6 +15,7 @@ editor keybindings.
 | `S` | `jjvs.revision.split` — Split Revision... | Revisions view focused, revision selected |
 | `Q` | `jjvs.revision.squash` — Squash into Parent | Revisions view focused, revision selected |
 | `A` | `jjvs.revision.absorb` — Absorb into Ancestors | Revisions view focused, repository open |
+| `B` | `jjvs.rebase` — Rebase Revision... | Revisions view focused, revision selected |
 | `R` | `jjvs.conflict.resolve` — Resolve Conflicts... | Revisions view focused, conflicts exist |
 
 All other jjvs commands are available from:
@@ -89,6 +90,11 @@ other extensions when the Revisions view is not focused:
   {
     "key": "ctrl+shift+j a",
     "command": "jjvs.revision.absorb",
+    "when": "jjvs:hasRepository"
+  },
+  {
+    "key": "ctrl+shift+j b",
+    "command": "jjvs.rebase",
     "when": "jjvs:hasRepository"
   },
   {

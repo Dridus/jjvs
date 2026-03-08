@@ -343,13 +343,48 @@ For details on the full conflict resolution workflow, see
 
 ---
 
+## jjvs.rebase
+
+**Title**: Rebase Revision...  
+**Category**: Jujutsu  
+**Icon**: `$(git-merge)`  
+**Enablement**: `jjvs:hasRepository`
+
+Runs a multi-step QuickPick to rebase one or more revisions to a new
+location in the commit graph.
+
+**Three-step flow:**
+
+1. **Source mode** — choose how much to rebase:
+   - *This revision only* (`-r`): move only the selected revision
+   - *This revision and all descendants* (`-s`): move the subtree
+   - *Entire branch* (`-b`): move all connected revisions in the branch
+2. **Destination** — select the revision to rebase onto
+3. **Placement** — choose where to place relative to the destination:
+   `onto` (as child), `after`, `before`, `insert-after`, `insert-before`
+
+After a successful rebase, jjvs detects any conflict cascade and shows an
+information message with a **Resolve Conflicts** shortcut if needed.
+
+Accessible from:
+- Revisions view context menu (right-click any revision)
+- Revisions view keybinding: `B` (when a revision is selected)
+- Command Palette
+
+Default keybinding (Revisions view focused, revision selected): `B`
+
+Equivalent to: `jj rebase [-r|-s|-b] <source> [--destination|--after|--before|...] <dest>`
+
+For a full usage walkthrough, see [Rebasing guide](../guides/rebasing.md).
+
+---
+
 ## Planned commands
 
 The following commands are planned for future phases and are not yet registered:
 
 | Command ID | Phase | Description |
 |------------|-------|-------------|
-| `jjvs.rebase` | 9 | Rebase with source/target picker (`jj rebase`) |
 | `jjvs.git.push` | 10 | Push to remote (`jj git push`) |
 | `jjvs.git.fetch` | 10 | Fetch from remote (`jj git fetch`) |
 | `jjvs.oplog.undo` | 11 | Undo the last operation (`jj undo`) |
