@@ -44,7 +44,18 @@ const extensionBundleOptions = {
  * @type {esbuild.BuildOptions[]}
  */
 const webviewBundleOptions = [
-  // Phase 13a: graph webview
+  // Phase 13: preview webview
+  {
+    entryPoints: ['webview-ui/preview/main.ts'],
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    outdir: 'dist/webviews/preview',
+    sourcemap: !isProduction,
+    minify: isProduction,
+    plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
+  },
+  // Phase 14: graph webview (placeholder — entry point not yet created)
   // {
   //   entryPoints: ['webview-ui/graph/main.ts'],
   //   bundle: true,
@@ -55,21 +66,7 @@ const webviewBundleOptions = [
   //   minify: isProduction,
   //   plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
   // },
-  // Phase 13a: preview webview
-  // {
-  //   entryPoints: ['webview-ui/preview/main.ts'],
-  //   bundle: true,
-  //   format: 'esm',
-  //   platform: 'browser',
-  //   outdir: 'dist/webviews/preview',
-  //   sourcemap: !isProduction,
-  //   minify: isProduction,
-  //   plugins: [esbuildSvelte({ compilerOptions: { css: 'injected' } })],
-  // },
 ];
-
-// Suppress unused variable warning: esbuildSvelte is used in commented webview configs above
-void esbuildSvelte;
 
 async function build() {
   const allBundleOptions = [extensionBundleOptions, ...webviewBundleOptions];

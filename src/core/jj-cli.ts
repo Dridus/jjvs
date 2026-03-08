@@ -266,6 +266,17 @@ export interface JjCli {
   show(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>>;
 
   /**
+   * Show the full contents of a revision with ANSI color output.
+   *
+   * Uses `--color always` to force color output even though the runner sets
+   * `NO_COLOR=1` for machine-readable commands. The explicit CLI flag takes
+   * precedence over the environment variable in jj >= 0.25.0.
+   *
+   * Equivalent to `jj show --color always <changeId>`.
+   */
+  showWithColor(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>>;
+
+  /**
    * Show the diff of a revision.
    * Equivalent to `jj diff [-r <changeId>]`.
    */
@@ -457,6 +468,13 @@ export class JjCliImpl implements JjCli {
   async show(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>> {
     return mapResult(
       await this.runner.run(['show', changeId], signal),
+      (output) => output.stdout,
+    );
+  }
+
+  async showWithColor(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>> {
+    return mapResult(
+      await this.runner.run(['show', '--color', 'always', changeId], signal),
       (output) => output.stdout,
     );
   }

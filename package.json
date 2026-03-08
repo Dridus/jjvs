@@ -294,6 +294,20 @@
         "category": "Jujutsu",
         "icon": "$(history)",
         "enablement": "jjvs:fileSelected"
+      },
+      {
+        "command": "jjvs.preview.show",
+        "title": "Show Preview Panel",
+        "category": "Jujutsu",
+        "icon": "$(preview)",
+        "enablement": "jjvs:hasRepository"
+      },
+      {
+        "command": "jjvs.preview.toggle",
+        "title": "Toggle Preview Panel",
+        "category": "Jujutsu",
+        "icon": "$(preview)",
+        "enablement": "jjvs:hasRepository"
       }
     ],
     "menus": {
@@ -348,6 +362,11 @@
         {
           "command": "jjvs.oplog.undo",
           "when": "view == jjvs.oplog && jjvs:hasRepository",
+          "group": "navigation"
+        },
+        {
+          "command": "jjvs.preview.toggle",
+          "when": "view == jjvs.revisions && jjvs:hasRepository",
           "group": "navigation"
         }
       ],

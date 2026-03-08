@@ -471,6 +471,42 @@ and so on.
 
 ---
 
+## Previewing a revision's changes
+
+The **Preview panel** shows the full `jj show` output for the selected revision
+with ANSI color rendering — the same view you'd see running `jj show <changeId>`
+in a terminal, including the commit metadata (change ID, author, date,
+description) and the complete diff.
+
+### Opening the preview panel
+
+- Click the preview icon ($(preview)) in the Revisions view toolbar.
+- Run **Jujutsu: Toggle Preview Panel** from the Command Palette.
+- Bind `jjvs.preview.toggle` to a keyboard shortcut for quick access.
+
+The panel auto-updates as you navigate revisions in the Revisions tree — no
+manual refresh is needed.
+
+### Panel position
+
+The `jjvs.preview.position` setting controls where the panel opens:
+
+| Value | Behavior |
+|-------|----------|
+| `"auto"` (default) | Opens beside the active editor when one is open; otherwise opens in a new column |
+| `"beside"` | Always opens beside the active editor (`ViewColumn.Beside`) |
+| `"below"` | Same as `"beside"` (VSCode does not support a fixed-below position for panels) |
+
+### Auto-open on start
+
+Set `jjvs.preview.showOnStart` to `true` to open the preview panel
+automatically every time the extension activates. Useful if you frequently
+work with diffs.
+
+> **jj equivalent**: `jj show <changeId>`
+
+---
+
 **Related**: [Commands reference](../reference/commands.md) |
 [Revsets guide](revsets.md) | [Bookmarks guide](bookmarks.md) |
 [Operation Log guide](operation-log.md)

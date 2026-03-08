@@ -85,6 +85,7 @@ import {
   registerSplitFileCommand,
   registerShowFileHistoryCommand,
 } from './commands/details-commands';
+import { PreviewPanelProvider } from './webview/preview/provider';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
@@ -820,7 +821,55 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerShowFileHistoryCommand(getActiveCommandContext, typedDetailsTreeView, applyRevsetFilter),
   );
 
-  // Phase 13: register preview panel
+  // ── 13. Preview webview panel ─────────────────────────────────────────────
+
+  const previewProvider = new PreviewPanelProvider(
+    context,
+    configService,
+    // Color-enabled CLI factory: creates a JjCliImpl that runs `jj show --color always`.
+    // The runner still sets NO_COLOR=1 for all other commands; the `--color always`
+    // flag in showWithColor() overrides that for preview output specifically.
+    (rootPath) =>
+      new JjCliImpl(
+        new JjRunnerImpl({
+          jjPath: configService.jjPath,
+          workingDirectory: rootPath,
+        }),
+      ),
+    logger,
+  );
+  context.subscriptions.push(previewProvider);
+
+  // Propagate revision selection changes to the preview panel (same hook as
+  // detailsTreeProvider and evologTreeProvider, wired to revisionTreeView above).
+  // We patch the existing selection handler by hooking into the same onDidChangeSelection
+  // that already fires for details and evolog providers. Since we can't modify the
+  // closure above, we add a second listener here.
+  context.subscriptions.push(
+    revisionTreeView.onDidChangeSelection((e) => {
+      const selected = e.selection[0];
+      const isRevisionItem =
+        selected !== undefined && 'revision' in selected && selected.revision !== undefined;
+      const selectedRevision = isRevisionItem ? (selected as RevisionTreeItem).revision : null;
+      const activeRepo = repositoryManager.repositories[0] ?? null;
+      previewProvider.setRevision(selectedRevision, activeRepo);
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('jjvs.preview.show', () => {
+      previewProvider.show();
+    }),
+    vscode.commands.registerCommand('jjvs.preview.toggle', () => {
+      previewProvider.toggle();
+    }),
+  );
+
+  // Auto-open on start if configured.
+  if (configService.previewShowOnStart && repositoryManager.repositories.length > 0) {
+    previewProvider.show();
+  }
+
   // Phase 14: register graph webview
 
   // Expose capabilities so later phases can gate features at registration time.

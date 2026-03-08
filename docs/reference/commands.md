@@ -4,7 +4,7 @@ All commands currently registered by jjvs. Commands are accessible from the Comm
 Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Jujutsu** category, from view
 toolbars, and from context menus.
 
-Commands are verified against `package.json` contribution points as of Phase 12b.
+Commands are verified against `package.json` contribution points as of Phase 13.
 
 ---
 
@@ -724,3 +724,44 @@ Context menu: visible on all file change items in the Details view
 Equivalent to: sets the Revisions view revset to `file("<path>")`
 
 For usage details, see [Revisions guide — Viewing a file's revision history](../guides/revisions.md#viewing-a-files-revision-history).
+
+---
+
+## jjvs.preview.show
+
+**Title**: Show Preview Panel  
+**Category**: Jujutsu  
+**Icon**: `$(preview)`  
+**Enablement**: `jjvs:hasRepository`
+
+Opens the Jujutsu Preview panel, which shows the full `jj show` output for the
+currently selected revision with ANSI color rendering. If the panel is already
+open, reveals it without stealing focus.
+
+The panel position is controlled by the `jjvs.preview.position` setting
+(`"auto"`, `"beside"`, or `"below"`). The panel auto-updates as you navigate
+revisions in the Revisions tree view.
+
+Accessible from:
+- Command palette: **Jujutsu: Show Preview Panel**
+
+For configuration details, see [Settings reference](settings.md#jjvspreviewposition).
+
+---
+
+## jjvs.preview.toggle
+
+**Title**: Toggle Preview Panel  
+**Category**: Jujutsu  
+**Icon**: `$(preview)`  
+**Enablement**: `jjvs:hasRepository`
+
+Opens the preview panel if it is closed, or closes it if it is currently open.
+Useful for binding to a keyboard shortcut to quickly show or hide the preview
+while navigating revisions.
+
+Accessible from:
+- Command palette: **Jujutsu: Toggle Preview Panel**
+- Revisions view toolbar (preview icon)
+
+For configuration details, see [Settings reference](settings.md#jjvspreviewposition).
