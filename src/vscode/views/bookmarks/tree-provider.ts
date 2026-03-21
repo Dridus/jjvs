@@ -1,9 +1,14 @@
 /**
  * TreeDataProvider for the jj bookmarks tree view (jjvs.bookmarks).
  *
- * Shows two collapsible sections:
- *   - **Local**: all local bookmarks from the current repository
- *   - **Remote**: all remote-tracking bookmarks, sorted by name then remote
+ * Groups bookmarks by name, mirroring `jj bookmark list --all`:
+ *   - A local bookmark with remotes becomes a collapsible parent; its remote
+ *     entries are children labelled `@remote`.
+ *   - A local bookmark with no remotes is a leaf.
+ *   - A bookmark name that exists only on one remote is a standalone leaf
+ *     labelled `name@remote`.
+ *   - A bookmark name that exists on multiple remotes (no local) gets a
+ *     collapsible BookmarkGroupItem with `@remote` children.
  *
  * Bookmark data is derived from the repository's cached revision list.
  * Each revision carries its `localBookmarks` and `remoteBookmarks` arrays,
@@ -15,10 +20,11 @@
  */
 
 import * as vscode from 'vscode';
+import type { LocalBookmark, RemoteBookmark } from '../../../core/types';
 import type { RepositoryState } from '../../../core/repository';
 import { extractBookmarksFromRevisions } from '../../../core/deserializers/bookmark';
 import {
-  BookmarkSectionItem,
+  BookmarkGroupItem,
   LocalBookmarkTreeItem,
   RemoteBookmarkTreeItem,
   type BookmarkTreeItem,
@@ -70,31 +76,20 @@ export class BookmarkTreeProvider
       return [];
     }
 
-    // Root level: two section headers
+    // Root: grouped top-level items sorted by bookmark name.
     if (element === undefined) {
       const bookmarks = extractBookmarksFromRevisions(this.repository.revisions);
-      return [
-        new BookmarkSectionItem('local', bookmarks.localBookmarks.length),
-        new BookmarkSectionItem('remote', bookmarks.remoteBookmarks.length),
-      ];
+      return buildTopLevelItems(bookmarks.localBookmarks, bookmarks.remoteBookmarks);
     }
 
-    // Children of a section header
-    if (element instanceof BookmarkSectionItem) {
-      const bookmarks = extractBookmarksFromRevisions(this.repository.revisions);
+    // Children of a local bookmark that has associated remotes.
+    if (element instanceof LocalBookmarkTreeItem && element.remoteBookmarks.length > 0) {
+      return element.remoteBookmarks.map((r) => new RemoteBookmarkTreeItem(r, true));
+    }
 
-      if (element.sectionKind === 'local') {
-        const sorted = [...bookmarks.localBookmarks].sort((a, b) => a.name.localeCompare(b.name));
-        return sorted.map((b) => new LocalBookmarkTreeItem(b));
-      }
-
-      if (element.sectionKind === 'remote') {
-        const sorted = [...bookmarks.remoteBookmarks].sort((a, b) => {
-          const nameComparison = a.name.localeCompare(b.name);
-          return nameComparison !== 0 ? nameComparison : a.remote.localeCompare(b.remote);
-        });
-        return sorted.map((b) => new RemoteBookmarkTreeItem(b));
-      }
+    // Children of a remote-only group (multiple remotes, no local).
+    if (element instanceof BookmarkGroupItem) {
+      return element.remoteBookmarks.map((r) => new RemoteBookmarkTreeItem(r, true));
     }
 
     return [];
@@ -104,4 +99,49 @@ export class BookmarkTreeProvider
     this.repositoryChangeDisposable?.dispose();
     this.changeEmitter.dispose();
   }
+}
+
+/**
+ * Build the flat list of top-level tree items, one entry per unique bookmark name.
+ *
+ * Rules (matching `jj bookmark list --all` presentation):
+ *   - local + remotes  → LocalBookmarkTreeItem (collapsible) with remote children
+ *   - local only       → LocalBookmarkTreeItem (leaf)
+ *   - one remote only  → RemoteBookmarkTreeItem standalone (leaf)
+ *   - multiple remotes → BookmarkGroupItem (collapsible) with remote children
+ */
+function buildTopLevelItems(
+  localBookmarks: readonly LocalBookmark[],
+  remoteBookmarks: readonly RemoteBookmark[],
+): BookmarkTreeItem[] {
+  const localByName = new Map(localBookmarks.map((b) => [b.name, b]));
+
+  const remotesByName = new Map<string, RemoteBookmark[]>();
+  for (const remote of remoteBookmarks) {
+    const existing = remotesByName.get(remote.name) ?? [];
+    existing.push(remote);
+    remotesByName.set(remote.name, existing);
+  }
+
+  const allNames = new Set([...localByName.keys(), ...remotesByName.keys()]);
+  const sortedNames = [...allNames].sort((a, b) => a.localeCompare(b));
+
+  const items: BookmarkTreeItem[] = [];
+  for (const name of sortedNames) {
+    const local = localByName.get(name);
+    const remotes = [...(remotesByName.get(name) ?? [])].sort((a, b) =>
+      a.remote.localeCompare(b.remote),
+    );
+
+    if (local !== undefined) {
+      items.push(new LocalBookmarkTreeItem(local, remotes));
+    } else if (remotes.length === 1) {
+      // safe: length check guarantees index 0 exists
+      items.push(new RemoteBookmarkTreeItem(remotes[0]!, false));
+    } else {
+      items.push(new BookmarkGroupItem(name, remotes));
+    }
+  }
+
+  return items;
 }
