@@ -57,7 +57,7 @@
         {
           "id": "jjvs.details",
           "name": "Jujutsu Details",
-          "icon": "icon.svg",
+          "icon": "resources/icons/jujutsu.svg",
           "when": "jjvs:hasRepository"
         }
       ]
