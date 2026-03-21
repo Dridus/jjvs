@@ -37,6 +37,12 @@
           "when": "jjvs:hasRepository"
         },
         {
+          "id": "jjvs.details",
+          "name": "Revision Details",
+          "icon": "$(list-unordered)",
+          "when": "jjvs:hasRepository"
+        },
+        {
           "id": "jjvs.bookmarks",
           "name": "Bookmarks",
           "icon": "$(bookmark)",
@@ -52,12 +58,6 @@
           "id": "jjvs.evolog",
           "name": "Evolution Log",
           "icon": "$(request-changes)",
-          "when": "jjvs:hasRepository"
-        },
-        {
-          "id": "jjvs.details",
-          "name": "Jujutsu Details",
-          "icon": "resources/icons/jujutsu.svg",
           "when": "jjvs:hasRepository"
         }
       ]
