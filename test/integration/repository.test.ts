@@ -32,9 +32,7 @@ suite('Repository — end-to-end against real jj', function () {
       return;
     }
     repo = createTempJjRepo();
-    cli = new JjCliImpl(
-      new JjRunnerImpl({ jjPath: 'jj', workingDirectory: repo.rootPath }),
-    );
+    cli = new JjCliImpl(new JjRunnerImpl({ jjPath: 'jj', workingDirectory: repo.rootPath }));
   });
 
   after(function () {
@@ -66,7 +64,11 @@ suite('Repository — end-to-end against real jj', function () {
 
     const workingCopy = revisions.find((r) => r.isWorkingCopy);
     assert.ok(workingCopy !== undefined, 'one revision must be the working copy');
-    assert.strictEqual(workingCopy.hasConflict, false, 'fresh working copy must not have conflicts');
+    assert.strictEqual(
+      workingCopy.hasConflict,
+      false,
+      'fresh working copy must not have conflicts',
+    );
     assert.strictEqual(workingCopy.isImmutable, false, 'working copy must not be immutable');
   });
 
@@ -89,10 +91,7 @@ suite('Repository — end-to-end against real jj', function () {
         revision.author.timestamp instanceof Date,
         `author.timestamp must be a Date, got ${typeof revision.author.timestamp}`,
       );
-      assert.ok(
-        !isNaN(revision.author.timestamp.getTime()),
-        'author.timestamp must not be NaN',
-      );
+      assert.ok(!isNaN(revision.author.timestamp.getTime()), 'author.timestamp must not be NaN');
     }
   });
 
@@ -101,11 +100,7 @@ suite('Repository — end-to-end against real jj', function () {
   test('status() on a clean repo returns no file changes', async function () {
     const result = await cli.status();
     assert.ok(result.ok, `status() failed: ${!result.ok ? result.error.message : ''}`);
-    assert.strictEqual(
-      result.value.fileChanges.length,
-      0,
-      'fresh repo must have no file changes',
-    );
+    assert.strictEqual(result.value.fileChanges.length, 0, 'fresh repo must have no file changes');
   });
 
   test('status() reflects a newly added file', async function () {
@@ -134,8 +129,16 @@ suite('Repository — end-to-end against real jj', function () {
   test('bookmarkList() on a fresh repo returns empty local and remote arrays', async function () {
     const result = await cli.bookmarkList();
     assert.ok(result.ok, `bookmarkList() failed: ${!result.ok ? result.error.message : ''}`);
-    assert.strictEqual(result.value.localBookmarks.length, 0, 'fresh repo must have no local bookmarks');
-    assert.strictEqual(result.value.remoteBookmarks.length, 0, 'fresh repo must have no remote bookmarks');
+    assert.strictEqual(
+      result.value.localBookmarks.length,
+      0,
+      'fresh repo must have no local bookmarks',
+    );
+    assert.strictEqual(
+      result.value.remoteBookmarks.length,
+      0,
+      'fresh repo must have no remote bookmarks',
+    );
   });
 
   // ── jj op log ────────────────────────────────────────────────────────────────
@@ -147,7 +150,10 @@ suite('Repository — end-to-end against real jj', function () {
 
     const first = result.value[0];
     assert.ok(first !== undefined);
-    assert.ok(typeof first.id === 'string' && first.id.length > 0, 'operation id must be non-empty');
+    assert.ok(
+      typeof first.id === 'string' && first.id.length > 0,
+      'operation id must be non-empty',
+    );
     assert.ok(first.time.start instanceof Date, 'operation start time must be a Date');
     assert.ok(first.time.end instanceof Date, 'operation end time must be a Date');
   });

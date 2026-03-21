@@ -128,7 +128,10 @@ export class JjStatusBar implements vscode.Disposable {
 /**
  * Build the tooltip MarkdownString for the current-change status bar item.
  */
-function buildChangeTooltip(workingCopy: Revision, descriptionSuffix: string): vscode.MarkdownString {
+function buildChangeTooltip(
+  workingCopy: Revision,
+  descriptionSuffix: string,
+): vscode.MarkdownString {
   const lines: string[] = [
     `**Change** \`${workingCopy.changeId}\``,
     `**Commit** \`${workingCopy.commitId}\``,

@@ -123,21 +123,19 @@ export class EvologTreeProvider
     this._loadingForChangeId = revision.changeId;
     this.changeEmitter.fire(undefined);
 
-    void repository.jjCli
-      .evolog(revision.changeId)
-      .then((result) => {
-        if (this._loadingForChangeId !== revision.changeId) return;
+    void repository.jjCli.evolog(revision.changeId).then((result) => {
+      if (this._loadingForChangeId !== revision.changeId) return;
 
-        this._loadingForChangeId = undefined;
+      this._loadingForChangeId = undefined;
 
-        if (result.ok) {
-          this._entries = result.value;
-        } else {
-          // Degrade gracefully: show empty rather than an error overlay.
-          this._entries = [];
-        }
+      if (result.ok) {
+        this._entries = result.value;
+      } else {
+        // Degrade gracefully: show empty rather than an error overlay.
+        this._entries = [];
+      }
 
-        this.changeEmitter.fire(undefined);
-      });
+      this.changeEmitter.fire(undefined);
+    });
   }
 }

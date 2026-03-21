@@ -27,11 +27,7 @@ import * as vscode from 'vscode';
 import type { RepositoryState } from '../../../core/repository';
 import type { Revision, FileChange } from '../../../core/types';
 import { parseSummaryDiff } from '../../../core/deserializers/diff';
-import {
-  FileChangeTreeItem,
-  LoadingTreeItem,
-  EmptyTreeItem,
-} from './tree-items';
+import { FileChangeTreeItem, LoadingTreeItem, EmptyTreeItem } from './tree-items';
 
 /** Union of all item types the details view can render. */
 export type DetailsTreeItem = FileChangeTreeItem | LoadingTreeItem | EmptyTreeItem;

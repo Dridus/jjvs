@@ -173,14 +173,12 @@ export function registerBookmarkMoveCommand(
 
     if (targetRevision === undefined) return;
 
-    await ctx.service.run(
-      { title: `Move bookmark ${bookmarkName}` },
-      (signal) =>
-        ctx.cli.bookmarkMove({
-          name: bookmarkName,
-          revset: targetRevision.changeId,
-          signal,
-        }),
+    await ctx.service.run({ title: `Move bookmark ${bookmarkName}` }, (signal) =>
+      ctx.cli.bookmarkMove({
+        name: bookmarkName,
+        revset: targetRevision.changeId,
+        signal,
+      }),
     );
   });
 }

@@ -22,9 +22,7 @@ describe('parseJjVersion', () => {
 
   it('parses a dev build version with commit hash suffix', () => {
     // Real output from jj 0.38.0 on 2026-03-07
-    const version = parseJjVersion(
-      'jj 0.38.0-2508982cde5c7e4db0933e0b6469f9e778e71e28',
-    );
+    const version = parseJjVersion('jj 0.38.0-2508982cde5c7e4db0933e0b6469f9e778e71e28');
     expect(version).toMatchObject({
       major: 0,
       minor: 38,
@@ -55,20 +53,30 @@ describe('parseJjVersion', () => {
 
 describe('compareVersions', () => {
   it('returns 0 for equal versions', () => {
-    expect(compareVersions({ major: 0, minor: 25, patch: 0 }, { major: 0, minor: 25, patch: 0 })).toBe(0);
+    expect(
+      compareVersions({ major: 0, minor: 25, patch: 0 }, { major: 0, minor: 25, patch: 0 }),
+    ).toBe(0);
   });
 
   it('compares major versions', () => {
-    expect(compareVersions({ major: 1, minor: 0, patch: 0 }, { major: 0, minor: 99, patch: 99 })).toBeGreaterThan(0);
-    expect(compareVersions({ major: 0, minor: 0, patch: 0 }, { major: 1, minor: 0, patch: 0 })).toBeLessThan(0);
+    expect(
+      compareVersions({ major: 1, minor: 0, patch: 0 }, { major: 0, minor: 99, patch: 99 }),
+    ).toBeGreaterThan(0);
+    expect(
+      compareVersions({ major: 0, minor: 0, patch: 0 }, { major: 1, minor: 0, patch: 0 }),
+    ).toBeLessThan(0);
   });
 
   it('compares minor versions when major is equal', () => {
-    expect(compareVersions({ major: 0, minor: 26, patch: 0 }, { major: 0, minor: 25, patch: 0 })).toBeGreaterThan(0);
+    expect(
+      compareVersions({ major: 0, minor: 26, patch: 0 }, { major: 0, minor: 25, patch: 0 }),
+    ).toBeGreaterThan(0);
   });
 
   it('compares patch versions when major and minor are equal', () => {
-    expect(compareVersions({ major: 0, minor: 25, patch: 1 }, { major: 0, minor: 25, patch: 0 })).toBeGreaterThan(0);
+    expect(
+      compareVersions({ major: 0, minor: 25, patch: 1 }, { major: 0, minor: 25, patch: 0 }),
+    ).toBeGreaterThan(0);
   });
 });
 

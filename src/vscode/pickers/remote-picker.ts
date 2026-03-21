@@ -55,10 +55,9 @@ export async function pickRemote(
     }
   }
 
-  const items: vscode.QuickPickItem[] = remoteNames.map((name): vscode.QuickPickItem =>
-    name === options.defaultRemote
-      ? { label: name, description: '(default)' }
-      : { label: name },
+  const items: vscode.QuickPickItem[] = remoteNames.map(
+    (name): vscode.QuickPickItem =>
+      name === options.defaultRemote ? { label: name, description: '(default)' } : { label: name },
   );
 
   const quickPick = vscode.window.createQuickPick();

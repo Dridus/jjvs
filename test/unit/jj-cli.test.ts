@@ -10,11 +10,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { JjCliImpl } from '../../src/core/jj-cli';
-import type {
-  NewRevisionOptions,
-  RebaseOptions,
-  DescribeOptions,
-} from '../../src/core/jj-cli';
+import type { NewRevisionOptions, RebaseOptions, DescribeOptions } from '../../src/core/jj-cli';
 import { ok, err } from '../../src/core/result';
 import type { JjRunner, JjOutput, JjError } from '../../src/core/jj-runner';
 import type { Result } from '../../src/core/result';
@@ -35,10 +31,7 @@ class MockJjRunner implements JjRunner {
   >();
 
   /** Register a response handler for commands whose first argument matches `command`. */
-  on(
-    command: string,
-    handler: (args: readonly string[]) => Result<JjOutput, JjError>,
-  ): void {
+  on(command: string, handler: (args: readonly string[]) => Result<JjOutput, JjError>): void {
     this.responses.set(command, handler);
   }
 
@@ -265,9 +258,7 @@ describe('JjCliImpl.log', () => {
     const rev = result.value[0]!;
     expect(rev.localBookmarks).toHaveLength(1);
     expect(rev.localBookmarks[0]!.name).toBe('main');
-    expect(rev.localBookmarks[0]!.targets).toEqual([
-      '1111e484af0843a4db7c6d6b849b1b22044b40cc',
-    ]);
+    expect(rev.localBookmarks[0]!.targets).toEqual(['1111e484af0843a4db7c6d6b849b1b22044b40cc']);
   });
 
   it('maps remote bookmarks correctly', async () => {
@@ -460,9 +451,22 @@ describe('JjCliImpl — mutating command argument construction', () => {
     cli = new JjCliImpl(runner);
     // Make all commands succeed so we can check args
     for (const cmd of [
-      'new', 'edit', 'abandon', 'describe', 'duplicate',
-      'rebase', 'squash', 'split', 'restore', 'absorb', 'revert', 'resolve',
-      'bookmark', 'git', 'op', 'undo',
+      'new',
+      'edit',
+      'abandon',
+      'describe',
+      'duplicate',
+      'rebase',
+      'squash',
+      'split',
+      'restore',
+      'absorb',
+      'revert',
+      'resolve',
+      'bookmark',
+      'git',
+      'op',
+      'undo',
     ]) {
       runner.succeedVoid(cmd);
     }
@@ -543,9 +547,7 @@ describe('JjCliImpl — mutating command argument construction', () => {
 
   it('bookmarkCreate — passes name and revset', async () => {
     await cli.bookmarkCreate('feature', 'abc123');
-    expect(runner.calls[0]).toEqual([
-      'bookmark', 'create', 'feature', '--revision', 'abc123',
-    ]);
+    expect(runner.calls[0]).toEqual(['bookmark', 'create', 'feature', '--revision', 'abc123']);
   });
 
   it('bookmarkDelete — passes all names', async () => {
@@ -597,7 +599,13 @@ describe('JjCliImpl — mutating command argument construction', () => {
   });
 
   it('fileShow — returns error result for non-existent file at revision', async () => {
-    runner.fail('file', { kind: 'non-zero-exit', message: 'No such path', exitCode: 1, stdout: '', stderr: '' });
+    runner.fail('file', {
+      kind: 'non-zero-exit',
+      message: 'No such path',
+      exitCode: 1,
+      stdout: '',
+      stderr: '',
+    });
     const result = await cli.fileShow('new-file.ts', '@-');
     expect(result.ok).toBe(false);
   });

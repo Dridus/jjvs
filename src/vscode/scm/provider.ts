@@ -71,8 +71,7 @@ export class JjvsSCMProvider implements vscode.Disposable {
       arguments: [repository.rootPath],
     };
 
-    this.sourceControl.inputBox.placeholder =
-      'Describe the working copy (jj describe)';
+    this.sourceControl.inputBox.placeholder = 'Describe the working copy (jj describe)';
 
     this.store.push(repository.onDidChange(() => this.updateResources()));
 

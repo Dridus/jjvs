@@ -26,10 +26,7 @@ import * as vscode from 'vscode';
 import type { LocalBookmark, RemoteBookmark } from '../../../core/types';
 
 /** Union type for all nodes in the bookmarks tree view. */
-export type BookmarkTreeItem =
-  | BookmarkSectionItem
-  | LocalBookmarkTreeItem
-  | RemoteBookmarkTreeItem;
+export type BookmarkTreeItem = BookmarkSectionItem | LocalBookmarkTreeItem | RemoteBookmarkTreeItem;
 
 // ─── Section items ─────────────────────────────────────────────────────────────
 
@@ -41,10 +38,7 @@ export class BookmarkSectionItem extends vscode.TreeItem {
   readonly sectionKind: 'local' | 'remote';
 
   constructor(sectionKind: 'local' | 'remote', count: number) {
-    super(
-      sectionKind === 'local' ? 'Local' : 'Remote',
-      vscode.TreeItemCollapsibleState.Expanded,
-    );
+    super(sectionKind === 'local' ? 'Local' : 'Remote', vscode.TreeItemCollapsibleState.Expanded);
     this.sectionKind = sectionKind;
     this.id = `bookmarkSection:${sectionKind}`;
     this.contextValue = 'bookmarkSection';

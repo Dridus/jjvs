@@ -76,9 +76,7 @@ export class JjQuickDiffProvider implements vscode.QuickDiffProvider {
     if (uri.scheme !== 'file') return undefined;
 
     const filePath = uri.fsPath;
-    const rootWithSep = this.rootPath.endsWith(path.sep)
-      ? this.rootPath
-      : this.rootPath + path.sep;
+    const rootWithSep = this.rootPath.endsWith(path.sep) ? this.rootPath : this.rootPath + path.sep;
 
     if (filePath !== this.rootPath && !filePath.startsWith(rootWithSep)) {
       return undefined;

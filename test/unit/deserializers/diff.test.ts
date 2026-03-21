@@ -61,7 +61,8 @@ describe('parseDiffStat', () => {
   });
 
   it('handles a purely deleted file (all minus bar)', () => {
-    const deletedFileStat = 'old-service.ts  |  42 ------------------------------------------\n1 file changed, 0 insertions(+), 42 deletions(-)\n';
+    const deletedFileStat =
+      'old-service.ts  |  42 ------------------------------------------\n1 file changed, 0 insertions(+), 42 deletions(-)\n';
     const entries = parseDiffStat(deletedFileStat);
     expect(entries).toHaveLength(1);
     expect(entries[0]!.path).toBe('old-service.ts');
@@ -72,7 +73,8 @@ describe('parseDiffStat', () => {
   it('handles a modified file with mixed plus/minus bar (approximate)', () => {
     // 10 total changes, bar shows 3 plus and 2 minus (ratio 3:2)
     // Expected: addedLines ≈ round(10 * 3/5) = 6, removedLines = 4
-    const modifiedStat = 'src/util.ts  |  10 +++--\n1 file changed, 6 insertions(+), 4 deletions(-)\n';
+    const modifiedStat =
+      'src/util.ts  |  10 +++--\n1 file changed, 6 insertions(+), 4 deletions(-)\n';
     const entries = parseDiffStat(modifiedStat);
     expect(entries).toHaveLength(1);
     expect(entries[0]!.path).toBe('src/util.ts');
@@ -130,11 +132,7 @@ describe('parseDiffStatPaths', () => {
 
 describe('parseSummaryDiff', () => {
   it('parses added, modified, and deleted files', () => {
-    const input = [
-      'A src/new-file.ts',
-      'M src/existing.ts',
-      'D src/removed.ts',
-    ].join('\n');
+    const input = ['A src/new-file.ts', 'M src/existing.ts', 'D src/removed.ts'].join('\n');
 
     const result = parseSummaryDiff(input);
     expect(result).toHaveLength(3);

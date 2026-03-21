@@ -81,15 +81,10 @@ async function showCredentialErrorNotification(remote: string): Promise<void> {
   );
 
   if (choice === 'Open Settings') {
-    await vscode.commands.executeCommand(
-      'workbench.action.openSettings',
-      'jjvs.git.defaultRemote',
-    );
+    await vscode.commands.executeCommand('workbench.action.openSettings', 'jjvs.git.defaultRemote');
   } else if (choice === 'Open Git Documentation') {
     await vscode.env.openExternal(
-      vscode.Uri.parse(
-        'https://jj-vcs.github.io/jj/latest/git-compatibility/#authentication',
-      ),
+      vscode.Uri.parse('https://jj-vcs.github.io/jj/latest/git-compatibility/#authentication'),
     );
   }
 }

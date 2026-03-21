@@ -118,10 +118,7 @@ export class JjRunnerImpl implements JjRunner {
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 30_000;
   }
 
-  async run(
-    args: readonly string[],
-    signal?: AbortSignal,
-  ): Promise<Result<JjOutput, JjError>> {
+  async run(args: readonly string[], signal?: AbortSignal): Promise<Result<JjOutput, JjError>> {
     // Reject immediately if the caller's signal is already aborted.
     if (signal?.aborted === true) {
       return err({ kind: 'cancelled', message: 'Command was cancelled before starting' });
@@ -184,8 +181,7 @@ export class JjRunnerImpl implements JjRunner {
         });
       } catch (spawnError) {
         // spawn() can throw synchronously for invalid arguments.
-        const message =
-          spawnError instanceof Error ? spawnError.message : String(spawnError);
+        const message = spawnError instanceof Error ? spawnError.message : String(spawnError);
         settle(err({ kind: 'unknown', message, cause: spawnError }));
         return;
       }

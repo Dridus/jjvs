@@ -116,8 +116,7 @@ export class RevisionLogTreeProvider
 
     const graphRows = renderGraph(revisions);
     const items: RevisionTreeNode[] = revisions.map(
-      (revision, index) =>
-        new RevisionTreeItem(revision, graphRows[index]?.nodePrefix ?? '○'),
+      (revision, index) => new RevisionTreeItem(revision, graphRows[index]?.nodePrefix ?? '○'),
     );
 
     // Append "Load more..." if the list length equals the current limit,

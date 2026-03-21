@@ -77,7 +77,9 @@ export function formatRelativeTime(date: Date): string {
 
 function buildOperationTooltip(operation: Operation): vscode.MarkdownString {
   const md = new vscode.MarkdownString();
-  md.appendMarkdown(`**${operation.description.split('\n')[0]?.trim() ?? operation.description}**\n\n`);
+  md.appendMarkdown(
+    `**${operation.description.split('\n')[0]?.trim() ?? operation.description}**\n\n`,
+  );
 
   if (operation.description.includes('\n')) {
     const rest = operation.description.split('\n').slice(1).join('\n').trim();

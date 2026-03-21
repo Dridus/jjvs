@@ -230,9 +230,7 @@ export async function openRevsetInput(
       ...new Set(revisions.flatMap((r) => r.localBookmarks.map((b) => b.name))),
     ];
     const remoteBookmarkNames = [
-      ...new Set(
-        revisions.flatMap((r) => r.remoteBookmarks.map((b) => `${b.name}@${b.remote}`)),
-      ),
+      ...new Set(revisions.flatMap((r) => r.remoteBookmarks.map((b) => `${b.name}@${b.remote}`))),
     ];
     const tagNames = [...new Set(revisions.flatMap((r) => r.tags.map((t) => t.name)))];
 
@@ -244,10 +242,7 @@ export async function openRevsetInput(
       aliasNames,
     });
 
-    quickPick.items = [
-      buildApplyItem(currentValue),
-      ...completions.map(buildCompletionItem),
-    ];
+    quickPick.items = [buildApplyItem(currentValue), ...completions.map(buildCompletionItem)];
 
     // Update the title to show signature help when the cursor is inside
     // a function call, or restore the default title when it is not.

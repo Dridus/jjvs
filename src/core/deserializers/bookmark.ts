@@ -30,9 +30,7 @@ export interface BookmarkListResult {
  *
  * @param revisions - Revisions returned by `jj log -r 'bookmarks() | remote_bookmarks()'`
  */
-export function extractBookmarksFromRevisions(
-  revisions: readonly Revision[],
-): BookmarkListResult {
+export function extractBookmarksFromRevisions(revisions: readonly Revision[]): BookmarkListResult {
   const localBookmarks = revisions.flatMap((r) => r.localBookmarks);
   const remoteBookmarks = revisions.flatMap((r) => r.remoteBookmarks);
   return { localBookmarks, remoteBookmarks };

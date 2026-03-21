@@ -61,9 +61,7 @@ describe('replaceLastToken', () => {
   });
 
   it('replaces the token after the last space', () => {
-    expect(replaceLastToken('ancestors(@) | boo', 'bookmarks')).toBe(
-      'ancestors(@) | bookmarks',
-    );
+    expect(replaceLastToken('ancestors(@) | boo', 'bookmarks')).toBe('ancestors(@) | bookmarks');
   });
 
   it('replaces an empty trailing token after a delimiter', () => {

@@ -167,7 +167,7 @@ export class ConfigService implements vscode.Disposable {
     const jjPath = this.jjPath.trim();
     if (jjPath === '') {
       warnings.push(
-        "jjvs.jjPath is set to an empty string. Set it to the path of the jj binary or remove it to use PATH resolution.",
+        'jjvs.jjPath is set to an empty string. Set it to the path of the jj binary or remove it to use PATH resolution.',
       );
     }
 

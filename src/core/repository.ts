@@ -276,7 +276,10 @@ export class RepositoryState implements Disposable {
     const [revisionsResult, statusResult, operationsResult] = await Promise.all([
       this.cli.log(logOptions),
       this.cli.status(signal),
-      this.cli.opLog({ limit: this.config.oplogLimit, ...(signal !== undefined ? { signal } : {}) }),
+      this.cli.opLog({
+        limit: this.config.oplogLimit,
+        ...(signal !== undefined ? { signal } : {}),
+      }),
     ]);
 
     if (revisionsResult.ok) {

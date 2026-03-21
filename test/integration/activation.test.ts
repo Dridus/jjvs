@@ -87,21 +87,13 @@ suite('Extension Activation', function () {
       false,
       'jjvs.preview.showOnStart default must be false',
     );
-    assert.strictEqual(
-      config.get('autoRefresh'),
-      true,
-      'jjvs.autoRefresh default must be true',
-    );
+    assert.strictEqual(config.get('autoRefresh'), true, 'jjvs.autoRefresh default must be true');
     assert.strictEqual(
       config.get('autoRefreshInterval'),
       3000,
       'jjvs.autoRefreshInterval default must be 3000',
     );
-    assert.strictEqual(
-      config.get('graphStyle'),
-      'text',
-      'jjvs.graphStyle default must be "text"',
-    );
+    assert.strictEqual(config.get('graphStyle'), 'text', 'jjvs.graphStyle default must be "text"');
   });
 
   // ── Context keys ─────────────────────────────────────────────────────────

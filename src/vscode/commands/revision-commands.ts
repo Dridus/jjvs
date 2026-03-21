@@ -153,9 +153,7 @@ export function registerEditRevisionCommand(
       return;
     }
 
-    await ctx.service.run({ title: 'Edit' }, (signal) =>
-      ctx.cli.edit(revision.changeId, signal),
-    );
+    await ctx.service.run({ title: 'Edit' }, (signal) => ctx.cli.edit(revision.changeId, signal));
   });
 }
 
@@ -318,10 +316,7 @@ export function registerDescribeInEditorCommand(
     const shortId = revision.changeId.substring(0, 12);
     // Write the current description to a temp file with a .jjmessage extension
     // so the file type is recognisable and users can configure syntax highlighting.
-    const tmpPath = path.join(
-      os.tmpdir(),
-      `jjvs-describe-${shortId}.jjmessage`,
-    );
+    const tmpPath = path.join(os.tmpdir(), `jjvs-describe-${shortId}.jjmessage`);
     const tmpUri = vscode.Uri.file(tmpPath);
 
     const currentDescription = revision.description.trim();
@@ -622,9 +617,7 @@ export function registerSquashRevisionCommand(
     }
 
     const targetLabel =
-      intoChangeId !== undefined
-        ? `ancestor ${intoChangeId.substring(0, 12)}`
-        : 'its parent';
+      intoChangeId !== undefined ? `ancestor ${intoChangeId.substring(0, 12)}` : 'its parent';
 
     const confirm = await vscode.window.showWarningMessage(
       `Squash ${sourceShortId} into ${targetLabel}?`,
@@ -683,9 +676,7 @@ export function registerRestoreRevisionCommand(
     if (revision === undefined) return;
 
     const shortId = revision.changeId.substring(0, 12);
-    const subject = revision.isWorkingCopy
-      ? 'working copy (@)'
-      : `revision ${shortId}`;
+    const subject = revision.isWorkingCopy ? 'working copy (@)' : `revision ${shortId}`;
 
     const confirm = await vscode.window.showWarningMessage(
       `Restore ${subject} to its parent state? This will discard all changes.`,

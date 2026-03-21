@@ -138,7 +138,7 @@ describe('JjRunnerImpl', () => {
       const runner = new JjRunnerImpl(makeConfig());
       const controller = new AbortController();
       controller.abort();
-      const result = await runner.run(['-e', "process.exit(0)"], controller.signal);
+      const result = await runner.run(['-e', 'process.exit(0)'], controller.signal);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.kind).toBe('cancelled');
@@ -150,10 +150,7 @@ describe('JjRunnerImpl', () => {
       const controller = new AbortController();
       // Abort after a short delay to let the process start.
       setTimeout(() => controller.abort(), 50);
-      const result = await runner.run(
-        ['-e', 'setTimeout(() => {}, 60_000)'],
-        controller.signal,
-      );
+      const result = await runner.run(['-e', 'setTimeout(() => {}, 60_000)'], controller.signal);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.kind).toBe('cancelled');
@@ -165,10 +162,7 @@ describe('JjRunnerImpl', () => {
       const controller = new AbortController();
       // Cancel immediately; the timeout is 200ms so cancellation wins.
       controller.abort();
-      const result = await runner.run(
-        ['-e', 'setTimeout(() => {}, 60_000)'],
-        controller.signal,
-      );
+      const result = await runner.run(['-e', 'setTimeout(() => {}, 60_000)'], controller.signal);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         // Pre-cancelled signal → 'cancelled', not 'timeout'

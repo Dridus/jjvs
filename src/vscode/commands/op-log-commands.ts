@@ -40,9 +40,7 @@ export function registerOpUndoCommand(
     );
     if (choice !== 'Undo') return;
 
-    await ctx.service.run({ title: 'Undo last operation' }, (signal) =>
-      ctx.cli.opUndo(signal),
-    );
+    await ctx.service.run({ title: 'Undo last operation' }, (signal) => ctx.cli.opUndo(signal));
   });
 }
 

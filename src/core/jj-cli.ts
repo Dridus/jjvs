@@ -22,10 +22,7 @@ import type { Revision, Operation, WorkingCopyStatus } from './types';
 import { REVISION_TEMPLATE, parseRevisions } from './deserializers/log';
 import { OPERATION_TEMPLATE, parseOperations } from './deserializers/op-log';
 import { parseStatus } from './deserializers/status';
-import {
-  extractBookmarksFromRevisions,
-  type BookmarkListResult,
-} from './deserializers/bookmark';
+import { extractBookmarksFromRevisions, type BookmarkListResult } from './deserializers/bookmark';
 
 // ─── Option types ─────────────────────────────────────────────────────────────
 
@@ -400,11 +397,7 @@ export interface JjCli {
   bookmarkForget(names: readonly string[], signal?: AbortSignal): Promise<Result<void, JjError>>;
 
   /** Track a remote bookmark locally. Equivalent to `jj bookmark track <name>@<remote>`. */
-  bookmarkTrack(
-    name: string,
-    remote: string,
-    signal?: AbortSignal,
-  ): Promise<Result<void, JjError>>;
+  bookmarkTrack(name: string, remote: string, signal?: AbortSignal): Promise<Result<void, JjError>>;
 
   /** Stop tracking a remote bookmark. Equivalent to `jj bookmark untrack <name>@<remote>`. */
   bookmarkUntrack(
@@ -465,10 +458,7 @@ export class JjCliImpl implements JjCli {
   }
 
   async show(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>> {
-    return mapResult(
-      await this.runner.run(['show', changeId], signal),
-      (output) => output.stdout,
-    );
+    return mapResult(await this.runner.run(['show', changeId], signal), (output) => output.stdout);
   }
 
   async showWithColor(changeId: string, signal?: AbortSignal): Promise<Result<string, JjError>> {
@@ -498,15 +488,11 @@ export class JjCliImpl implements JjCli {
     return mapResult(result, (output) => parseStatus(output.stdout));
   }
 
-  async bookmarkList(
-    options?: BookmarkListOptions,
-  ): Promise<Result<BookmarkListResult, JjError>> {
+  async bookmarkList(options?: BookmarkListOptions): Promise<Result<BookmarkListResult, JjError>> {
     // Uses jj log to extract bookmark data in structured form (log-based approach).
     // A future enhancement could migrate to direct `jj bookmark list -T` parsing
     // using CommitRef fields without changing the BookmarkListResult return type.
-    const revset = options?.allRemotes
-      ? 'bookmarks() | remote_bookmarks()'
-      : 'bookmarks()';
+    const revset = options?.allRemotes ? 'bookmarks() | remote_bookmarks()' : 'bookmarks()';
     // Conditional spread avoids passing `undefined` for `signal` with exactOptionalPropertyTypes.
     const logResult = await this.log({
       revset,
@@ -524,16 +510,18 @@ export class JjCliImpl implements JjCli {
     return mapResult(result, (output) => parseOperations(output.stdout));
   }
 
-  async evolog(changeId: string, signal?: AbortSignal): Promise<Result<readonly Revision[], JjError>> {
+  async evolog(
+    changeId: string,
+    signal?: AbortSignal,
+  ): Promise<Result<readonly Revision[], JjError>> {
     const args = ['evolog', '--no-graph', '-T', REVISION_TEMPLATE, '-r', changeId];
     const result = await this.runner.run(args, signal);
     return mapResult(result, (output) => parseRevisions(output.stdout));
   }
 
   async configGet(key: string, signal?: AbortSignal): Promise<Result<string, JjError>> {
-    return mapResult(
-      await this.runner.run(['config', 'get', key], signal),
-      (output) => output.stdout.trim(),
+    return mapResult(await this.runner.run(['config', 'get', key], signal), (output) =>
+      output.stdout.trim(),
     );
   }
 
@@ -601,10 +589,7 @@ export class JjCliImpl implements JjCli {
   }
 
   async rebase(options: RebaseOptions): Promise<Result<void, JjError>> {
-    const modeFlag =
-      options.mode === 'revision' ? '-r' :
-      options.mode === 'source'   ? '-s' :
-                                    '-b';
+    const modeFlag = options.mode === 'revision' ? '-r' : options.mode === 'source' ? '-s' : '-b';
     const args = ['rebase', modeFlag, options.revset];
 
     const placement = options.placement ?? 'onto';
@@ -746,9 +731,7 @@ export class JjCliImpl implements JjCli {
     remote: string,
     signal?: AbortSignal,
   ): Promise<Result<void, JjError>> {
-    return voidResult(
-      await this.runner.run(['bookmark', 'track', `${name}@${remote}`], signal),
-    );
+    return voidResult(await this.runner.run(['bookmark', 'track', `${name}@${remote}`], signal));
   }
 
   async bookmarkUntrack(
@@ -756,9 +739,7 @@ export class JjCliImpl implements JjCli {
     remote: string,
     signal?: AbortSignal,
   ): Promise<Result<void, JjError>> {
-    return voidResult(
-      await this.runner.run(['bookmark', 'untrack', `${name}@${remote}`], signal),
-    );
+    return voidResult(await this.runner.run(['bookmark', 'untrack', `${name}@${remote}`], signal));
   }
 
   // ── Git operations ────────────────────────────────────────────────────────
@@ -809,13 +790,14 @@ export class JjCliImpl implements JjCli {
  * discarding the output. Used for mutating commands where only success/failure
  * matters.
  */
-function voidResult(result: Result<{ stdout: string; stderr: string }, JjError>): Result<void, JjError> {
+function voidResult(
+  result: Result<{ stdout: string; stderr: string }, JjError>,
+): Result<void, JjError> {
   return mapResult(result, () => undefined);
 }
 
 // parseRevisions, parseOperations, and parseStatus are imported from
 // src/core/deserializers/ at the top of this file.
-
 
 // ─── Factory ──────────────────────────────────────────────────────────────────
 

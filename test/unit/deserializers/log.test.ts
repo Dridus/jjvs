@@ -139,9 +139,7 @@ describe('rawRevisionToRevision', () => {
     const raw = JSON.parse(loadFixtureLines()[1]!) as RawRevision;
     const revision = rawRevisionToRevision(raw);
     // Parent of the second revision is the root commit
-    expect(revision.parentCommitIds[0]).toBe(
-      '0000000000000000000000000000000000000000',
-    );
+    expect(revision.parentCommitIds[0]).toBe('0000000000000000000000000000000000000000');
   });
 });
 

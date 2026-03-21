@@ -32,11 +32,7 @@ import { FileWatcher } from './file-watcher';
 import { DisposableStore } from './disposable-store';
 import { JjFileDecorationProvider } from './scm/decorations';
 import { JjvsSCMProvider } from './scm/provider';
-import {
-  JjOriginalContentProvider,
-  JJ_ORIGINAL_SCHEME,
-  buildOriginalUri,
-} from './scm/quick-diff';
+import { JjOriginalContentProvider, JJ_ORIGINAL_SCHEME, buildOriginalUri } from './scm/quick-diff';
 import { RevisionLogTreeProvider } from './views/revisions/tree-provider';
 import { RevisionTreeItem } from './views/revisions/tree-items';
 import { RevsetSessionHistory, openRevsetInput } from './views/revisions/revset-input';
@@ -68,14 +64,8 @@ import { BookmarkTreeProvider } from './views/bookmarks/tree-provider';
 import { OpLogTreeProvider } from './views/op-log/tree-provider';
 import type { OpLogTreeItem } from './views/op-log/tree-items';
 import { ConflictStatusBar, JjStatusBar } from './status-bar';
-import {
-  registerGitPushCommand,
-  registerGitFetchCommand,
-} from './commands/git-commands';
-import {
-  registerOpUndoCommand,
-  registerOpRestoreCommand,
-} from './commands/op-log-commands';
+import { registerGitPushCommand, registerGitFetchCommand } from './commands/git-commands';
+import { registerOpUndoCommand, registerOpRestoreCommand } from './commands/op-log-commands';
 import { DetailsTreeProvider } from './views/details/tree-provider';
 import type { DetailsTreeItem } from './views/details/tree-provider';
 import type { FileChangeTreeItem } from './views/details/tree-items';
@@ -91,7 +81,6 @@ import { GraphWebviewProvider } from './webview/graph/provider';
 
 /** Extension identifier used for output channel naming and context key prefixes. */
 const EXTENSION_ID = 'jjvs';
-
 
 /**
  * Called by VSCode when the extension activates (workspace contains .jj,
@@ -145,9 +134,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // the same Result/JjError path as all other jj commands rather than having
   // a parallel raw execFile code path.
   const jjPath = configService.jjPath;
-  const versionCli = new JjCliImpl(
-    new JjRunnerImpl({ jjPath, workingDirectory: process.cwd() }),
-  );
+  const versionCli = new JjCliImpl(new JjRunnerImpl({ jjPath, workingDirectory: process.cwd() }));
   const versionResult = await versionCli.version();
 
   /** Capability flags derived from the detected jj version. Null if jj not found. */
@@ -226,10 +213,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     // Add watchers for new repositories
     for (const repo of repositoryManager.repositories) {
       if (!fileWatchers.has(repo.rootPath)) {
-        const watcher = new FileWatcher(
-          repo.rootPath,
-          configService.getAutoRefreshInterval(),
-        );
+        const watcher = new FileWatcher(repo.rootPath, configService.getAutoRefreshInterval());
         watcher.onDidChange(() => {
           if (configService.getAutoRefresh()) {
             // CommandService calls watcher.suppressNextChange() before each
@@ -284,11 +268,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     for (const repo of repositoryManager.repositories) {
       if (!commandServices.has(repo.rootPath)) {
-        const service = new CommandService(
-          repo,
-          fileWatchers.get(repo.rootPath),
-          logger,
-        );
+        const service = new CommandService(repo, fileWatchers.get(repo.rootPath), logger);
         commandServices.set(repo.rootPath, service);
         logger.debug(`CommandService created for ${repo.rootPath}`);
       }
@@ -385,7 +365,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     repositoryManager.onDidChangeRepositories(() => {
       const repos = repositoryManager.repositories;
       void setContextKey('hasRepository', repos.length > 0);
-      void setContextKey('isColocated', repos.some((r) => r.kind === 'colocated'));
+      void setContextKey(
+        'isColocated',
+        repos.some((r) => r.kind === 'colocated'),
+      );
       updateConflictContextKey();
       updateConflictStatusBar();
       updateJjStatusBar();
@@ -467,27 +450,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // argument is pre-bound in JjvsSCMProvider.acceptInputCommand.arguments so
   // we know which SCM provider (and repository) to act on.
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'jjvs.describeWorkingCopy',
-      (rootPath?: string) => {
-        const provider =
-          rootPath !== undefined
-            ? scmProviders.get(rootPath)
-            : // Fallback: use the first provider if there is exactly one repo.
-              scmProviders.size === 1
-              ? [...scmProviders.values()][0]
-              : undefined;
+    vscode.commands.registerCommand('jjvs.describeWorkingCopy', (rootPath?: string) => {
+      const provider =
+        rootPath !== undefined
+          ? scmProviders.get(rootPath)
+          : // Fallback: use the first provider if there is exactly one repo.
+            scmProviders.size === 1
+            ? [...scmProviders.values()][0]
+            : undefined;
 
-        if (provider === undefined) {
-          logger.warn(
-            `jjvs.describeWorkingCopy: no SCM provider found for rootPath=${rootPath ?? '(none)'}`,
-          );
-          return;
-        }
+      if (provider === undefined) {
+        logger.warn(
+          `jjvs.describeWorkingCopy: no SCM provider found for rootPath=${rootPath ?? '(none)'}`,
+        );
+        return;
+      }
 
-        void provider.executeDescribe();
-      },
-    ),
+      void provider.executeDescribe();
+    }),
   );
 
   // Invalidate original-content URIs after each repository refresh so that
@@ -641,7 +621,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
    * time) so the reference is always current after workspace changes.
    */
   const getActiveCommandContext = ():
-    | { service: CommandService; cli: JjCli; repository: RepositoryState; disposables: vscode.Disposable[] }
+    | {
+        service: CommandService;
+        cli: JjCli;
+        repository: RepositoryState;
+        disposables: vscode.Disposable[];
+      }
     | undefined => {
     const repo = repositoryManager.repositories[0];
     if (repo === undefined) return undefined;
@@ -770,47 +755,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // ── 12a. Details view commands ────────────────────────────────────────────
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'jjvs.details.openDiff',
-      async (item: FileChangeTreeItem) => {
-        if (item === undefined || item.fileChange === undefined) return;
+    vscode.commands.registerCommand('jjvs.details.openDiff', async (item: FileChangeTreeItem) => {
+      if (item === undefined || item.fileChange === undefined) return;
 
-        const { fileChange, revision, rootPath } = item;
-        const parentChangeId = revision.parentChangeIds[0];
+      const { fileChange, revision, rootPath } = item;
+      const parentChangeId = revision.parentChangeIds[0];
 
-        // For the diff, we need the file content at two revisions:
-        //   left  (before) = file at the parent revision
-        //   right (after)  = file at the selected revision
-        //
-        // Both sides use jj-original: URIs so the existing JjOriginalContentProvider
-        // handles the content fetch. If a file doesn't exist at a revision
-        // (e.g., newly added), fileShow returns an error and the provider
-        // returns '' → the diff shows an empty left side, which is correct.
+      // For the diff, we need the file content at two revisions:
+      //   left  (before) = file at the parent revision
+      //   right (after)  = file at the selected revision
+      //
+      // Both sides use jj-original: URIs so the existing JjOriginalContentProvider
+      // handles the content fetch. If a file doesn't exist at a revision
+      // (e.g., newly added), fileShow returns an error and the provider
+      // returns '' → the diff shows an empty left side, which is correct.
 
-        const filePath =
-          fileChange.status === 'renamed' || fileChange.status === 'copied'
-            ? fileChange.originalPath ?? fileChange.path
-            : fileChange.path;
+      const filePath =
+        fileChange.status === 'renamed' || fileChange.status === 'copied'
+          ? (fileChange.originalPath ?? fileChange.path)
+          : fileChange.path;
 
-        // Left side: file at the parent revision (or empty if the parent is the root).
-        const leftUri =
-          parentChangeId !== undefined
-            ? buildOriginalUri(rootPath, filePath, parentChangeId)
-            : // Root revision has no parent: show empty left side.
-              buildOriginalUri(rootPath, filePath, 'root()');
+      // Left side: file at the parent revision (or empty if the parent is the root).
+      const leftUri =
+        parentChangeId !== undefined
+          ? buildOriginalUri(rootPath, filePath, parentChangeId)
+          : // Root revision has no parent: show empty left side.
+            buildOriginalUri(rootPath, filePath, 'root()');
 
-        // Right side: file at the selected revision.
-        // For deletions the file won't exist at the revision — the provider
-        // returns '' for that case, giving a "deleted file" diff.
-        const rightUri = buildOriginalUri(rootPath, fileChange.path, revision.changeId);
+      // Right side: file at the selected revision.
+      // For deletions the file won't exist at the revision — the provider
+      // returns '' for that case, giving a "deleted file" diff.
+      const rightUri = buildOriginalUri(rootPath, fileChange.path, revision.changeId);
 
-        const shortId = revision.changeId.substring(0, 12);
-        const fileName = fileChange.path.split('/').pop() ?? fileChange.path;
-        const title = `${fileName} (${shortId})`;
+      const shortId = revision.changeId.substring(0, 12);
+      const fileName = fileChange.path.split('/').pop() ?? fileChange.path;
+      const title = `${fileName} (${shortId})`;
 
-        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
-      },
-    ),
+      await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
+    }),
   );
 
   // ── 12b. Evolution log tree view ─────────────────────────────────────────
@@ -840,7 +822,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     registerRestoreFileCommand(getActiveCommandContext, typedDetailsTreeView),
     registerSquashFileCommand(getActiveCommandContext, typedDetailsTreeView),
     registerSplitFileCommand(getActiveCommandContext, typedDetailsTreeView),
-    registerShowFileHistoryCommand(getActiveCommandContext, typedDetailsTreeView, applyRevsetFilter),
+    registerShowFileHistoryCommand(
+      getActiveCommandContext,
+      typedDetailsTreeView,
+      applyRevsetFilter,
+    ),
   );
 
   // ── 13. Preview webview panel ─────────────────────────────────────────────
@@ -1012,7 +998,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (ctx === undefined) return;
       const { service, cli } = ctx;
       void service.run(
-        { title: `Rebase ${sourceChangeId.substring(0, 8)} onto ${targetChangeId.substring(0, 8)}`, showProgress: true },
+        {
+          title: `Rebase ${sourceChangeId.substring(0, 8)} onto ${targetChangeId.substring(0, 8)}`,
+          showProgress: true,
+        },
         (signal) =>
           cli.rebase({
             revset: sourceChangeId,

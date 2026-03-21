@@ -53,7 +53,10 @@ export class FileChangeTreeItem extends vscode.TreeItem {
     const fileName = path.basename(fileChange.path);
     const dirPath = path.dirname(fileChange.path);
 
-    super({ label: fileName, highlights: [] } satisfies vscode.TreeItemLabel, vscode.TreeItemCollapsibleState.None);
+    super(
+      { label: fileName, highlights: [] } satisfies vscode.TreeItemLabel,
+      vscode.TreeItemCollapsibleState.None,
+    );
 
     this.fileChange = fileChange;
     this.revision = revision;

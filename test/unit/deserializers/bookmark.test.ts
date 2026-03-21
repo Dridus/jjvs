@@ -64,9 +64,7 @@ describe('extractBookmarksFromRevisions', () => {
   });
 
   it('collects remote bookmarks from a single revision', () => {
-    const revisions = [
-      makeRevision('abc', [], [makeRemoteBookmark('main', 'origin')]),
-    ];
+    const revisions = [makeRevision('abc', [], [makeRemoteBookmark('main', 'origin')])];
     const result = extractBookmarksFromRevisions(revisions);
     expect(result.remoteBookmarks).toHaveLength(1);
     expect(result.remoteBookmarks[0]?.name).toBe('main');
@@ -75,7 +73,11 @@ describe('extractBookmarksFromRevisions', () => {
 
   it('collects bookmarks across multiple revisions', () => {
     const revisions = [
-      makeRevision('abc', [makeLocalBookmark('feature')], [makeRemoteBookmark('feature', 'origin')]),
+      makeRevision(
+        'abc',
+        [makeLocalBookmark('feature')],
+        [makeRemoteBookmark('feature', 'origin')],
+      ),
       makeRevision('def', [makeLocalBookmark('main')], []),
     ];
     const result = extractBookmarksFromRevisions(revisions);
@@ -151,11 +153,7 @@ describe('extractLocalBookmarkNames', () => {
 
   it('includes only local bookmark names, not remote bookmark names', () => {
     const revisions = [
-      makeRevision(
-        'abc',
-        [makeLocalBookmark('main')],
-        [makeRemoteBookmark('main', 'origin')],
-      ),
+      makeRevision('abc', [makeLocalBookmark('main')], [makeRemoteBookmark('main', 'origin')]),
     ];
     const names = extractLocalBookmarkNames(revisions);
     // Remote bookmarks are not included in the name list

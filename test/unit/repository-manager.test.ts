@@ -71,9 +71,7 @@ describe('discoverJjRoots', () => {
   });
 
   it('returns paths that contain .jj', () => {
-    vi.mocked(fs.existsSync).mockImplementation((p) =>
-      String(p).endsWith('.jj') ? true : false,
-    );
+    vi.mocked(fs.existsSync).mockImplementation((p) => (String(p).endsWith('.jj') ? true : false));
     expect(discoverJjRoots(['/repo', '/other'])).toEqual(['/repo', '/other']);
   });
 

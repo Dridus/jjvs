@@ -172,9 +172,7 @@ export function registerSplitFileCommand(
         ctx.cli.split({
           changeId: revision.changeId,
           paths: [fileChange.path],
-          ...(firstDescription.trim() !== ''
-            ? { firstDescription: firstDescription.trim() }
-            : {}),
+          ...(firstDescription.trim() !== '' ? { firstDescription: firstDescription.trim() } : {}),
           signal,
         }),
       );

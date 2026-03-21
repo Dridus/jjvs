@@ -104,8 +104,7 @@ async function pickPlacement(): Promise<Placement | undefined> {
     {
       label: '$(arrow-right) After (insert before its children)',
       description: '--after',
-      detail:
-        'Insert the rebased revision between the destination and its current children.',
+      detail: 'Insert the rebased revision between the destination and its current children.',
       placement: 'after',
     },
     {
@@ -210,18 +209,16 @@ export function registerRebaseCommand(
 
     // ── Execute ─────────────────────────────────────────────────────────────
 
-    const succeeded = await ctx.service.run(
-      { title: 'Rebase', showProgress: true },
-      (signal) =>
-        ctx.cli.rebase({
-          revset: sourceRevision.changeId,
-          mode,
-          destination: destination.changeId,
-          // 'onto' is the default; omit the property entirely rather than
-          // assigning undefined (exactOptionalPropertyTypes enforcement).
-          ...(placement !== 'onto' ? { placement } : {}),
-          signal,
-        }),
+    const succeeded = await ctx.service.run({ title: 'Rebase', showProgress: true }, (signal) =>
+      ctx.cli.rebase({
+        revset: sourceRevision.changeId,
+        mode,
+        destination: destination.changeId,
+        // 'onto' is the default; omit the property entirely rather than
+        // assigning undefined (exactOptionalPropertyTypes enforcement).
+        ...(placement !== 'onto' ? { placement } : {}),
+        signal,
+      }),
     );
 
     if (!succeeded) return;

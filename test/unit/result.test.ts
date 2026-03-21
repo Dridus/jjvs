@@ -165,9 +165,7 @@ describe('unwrapResult', () => {
   });
 
   it('wraps non-Error Err values in a new Error', () => {
-    expect(() => unwrapResult(err('string error'))).toThrowError(
-      /Result was Err/,
-    );
+    expect(() => unwrapResult(err('string error'))).toThrowError(/Result was Err/);
   });
 });
 

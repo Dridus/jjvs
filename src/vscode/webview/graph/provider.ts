@@ -214,11 +214,7 @@ export class GraphWebviewProvider implements vscode.Disposable {
     private readonly context: vscode.ExtensionContext,
     private readonly logger: OutputChannelLogger,
   ) {
-    this.store.push(
-      this._onDidSelectRevision,
-      this._onDidContextMenuAction,
-      this._onDidDragRebase,
-    );
+    this.store.push(this._onDidSelectRevision, this._onDidContextMenuAction, this._onDidDragRebase);
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────

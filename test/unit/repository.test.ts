@@ -149,9 +149,7 @@ describe('RepositoryState', () => {
           .fn()
           .mockImplementationOnce(
             () =>
-              new Promise((res) =>
-                firstLogPromise.then(() => res(ok([makeRevision('first')]))),
-              ),
+              new Promise((res) => firstLogPromise.then(() => res(ok([makeRevision('first')])))),
           )
           .mockResolvedValue(ok([makeRevision('second')])),
         status: vi.fn().mockResolvedValue(ok(makeStatus())),

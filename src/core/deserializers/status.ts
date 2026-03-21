@@ -111,11 +111,17 @@ export function parseStatus(stdout: string): WorkingCopyStatus {
  */
 export function parseFileStatusChar(char: string | undefined): FileStatus | undefined {
   switch (char) {
-    case 'A': return 'added';
-    case 'M': return 'modified';
-    case 'D': return 'deleted';
-    case 'R': return 'renamed';
-    case 'C': return 'copied';
-    default:  return undefined;
+    case 'A':
+      return 'added';
+    case 'M':
+      return 'modified';
+    case 'D':
+      return 'deleted';
+    case 'R':
+      return 'renamed';
+    case 'C':
+      return 'copied';
+    default:
+      return undefined;
   }
 }

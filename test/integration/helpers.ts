@@ -53,9 +53,7 @@ export function createTempJjRepo(jjPath = 'jj'): TempJjRepo {
       throw result.error;
     }
     if (result.status !== 0) {
-      throw new Error(
-        `jj ${args.join(' ')} failed (exit ${result.status}):\n${result.stderr}`,
-      );
+      throw new Error(`jj ${args.join(' ')} failed (exit ${result.status}):\n${result.stderr}`);
     }
     return result.stdout;
   };
@@ -105,10 +103,7 @@ let cachedPackageJson: Record<string, unknown> | undefined;
 export function getExtensionManifest(): Record<string, unknown> {
   if (cachedPackageJson === undefined) {
     const pkgPath = path.join(__dirname, '..', '..', 'package.json');
-    cachedPackageJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as Record<
-      string,
-      unknown
-    >;
+    cachedPackageJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as Record<string, unknown>;
   }
   return cachedPackageJson;
 }

@@ -52,10 +52,7 @@ export function err<E>(error: E): Err<E> {
  * mapResult(ok(42), x => x * 2)      // Ok<84>
  * mapResult(err('oops'), x => x * 2) // Err<'oops'>
  */
-export function mapResult<T, U, E>(
-  result: Result<T, E>,
-  fn: (value: T) => U,
-): Result<U, E> {
+export function mapResult<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {
   return result.ok ? ok(fn(result.value)) : result;
 }
 
@@ -66,10 +63,7 @@ export function mapResult<T, U, E>(
  * mapErr(err('oops'), e => new Error(e)) // Err<Error>
  * mapErr(ok(42), e => new Error(e))      // Ok<42>
  */
-export function mapErr<T, E, F>(
-  result: Result<T, E>,
-  fn: (error: E) => F,
-): Result<T, F> {
+export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {
   return result.ok ? result : err(fn(result.error));
 }
 

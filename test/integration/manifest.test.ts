@@ -139,10 +139,7 @@ suite('Extension Manifest', function () {
   test('no duplicate command IDs', function () {
     const seen = new Set<string>();
     for (const cmd of commands) {
-      assert.ok(
-        !seen.has(cmd.command),
-        `duplicate command ID '${cmd.command}'`,
-      );
+      assert.ok(!seen.has(cmd.command), `duplicate command ID '${cmd.command}'`);
       seen.add(cmd.command);
     }
   });
