@@ -135,9 +135,9 @@ function buildTopLevelItems(
 
     if (local !== undefined) {
       items.push(new LocalBookmarkTreeItem(local, remotes));
-    } else if (remotes.length === 1) {
+    } else if (remotes[0] !== undefined) {
       // safe: length check guarantees index 0 exists
-      items.push(new RemoteBookmarkTreeItem(remotes[0]!, false));
+      items.push(new RemoteBookmarkTreeItem(remotes[0], false));
     } else {
       items.push(new BookmarkGroupItem(name, remotes));
     }
