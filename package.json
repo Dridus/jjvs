@@ -694,7 +694,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "compile:integration": "tsc -p tsconfig.integration.json",
-    "test:integration": "pnpm compile:integration && node ./node_modules/@vscode/test-cli/bin/vscode-test",
+    "test:integration": "pnpm compile:integration && pnpm exec vscode-test",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

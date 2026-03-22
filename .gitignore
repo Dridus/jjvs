@@ -2,6 +2,7 @@
 dist/
 out/
 out-test/
+.vscode-test/
 
 # Node.js
 node_modules/
