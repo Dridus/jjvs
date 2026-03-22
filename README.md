@@ -1,3 +1,17 @@
+# Preamble
+
+Hello! This project is, as described below, intended to become a full featured and useful Jujutsu extension for VSCode or Cursor. My hope is that it becomes as useful as `jjui` and the VSCode `git` extension combined. It is certainly not there yet.
+
+The majority of the code was created by agent, specifically Opus 4.6 for planning and larger more complicated tasks and Sonnet 4.6 for the bulk of the work. The plan files used for this are preserved in `.cursor/plans` for posterity and reference, and the persistent agent guidance is in `CLAUDE.md` per usual.
+
+As of this writing, most of the repository has not been reviewed or vetted by a human, though as I exercise the extension and improve things I go through and do that. I'm publishing it as open source in the hopes that it's interesting at the least and eventually useful.
+
+If you'd like to participate in its evolution and development please feel invited, but I felt it's important that everyone be aware of its provenance. If you are looking for a good UI for jj beyond the built-in CLI, [`jjui`](https://github.com/idursun/jjui) is very good, and I'm grateful for it as both a tool I use regularly and as inspiration. As far as VSCode extensions go, there is also [`jjk`](https://github.com/keanemind/jjk) which is functional albeit with a much smaller featureset than `jjui` or the standard VSCode `git` extension.
+
+Other thank this introductory section of the README, the rest of the README and documentation was written by Claude. I tried to guide it to produce good content, but keep in mind that sometimes the machine ghost can get pretty imaginative.
+
+-Ross
+
 # Jujutsu for VSCode (jjvs)
 
 A feature-rich, open-source [Jujutsu (jj)](https://github.com/jj-vcs/jj) extension for VSCode and Cursor.
