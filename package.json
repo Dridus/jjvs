@@ -710,7 +710,9 @@
       "keytar"
     ],
     "overrides": {
-      "serialize-javascript": ">=7.0.4"
+      "devalue": ">=5.6.4",
+      "serialize-javascript": ">=7.0.4",
+      "undici": ">=7.24.0"
     }
   },
   "devDependencies": {
@@ -720,7 +722,7 @@
     "@types/vscode": "1.105.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.0",
-    "@vscode/vsce": "^3.0.0",
+    "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.25.0",
     "esbuild-svelte": "^0.9.0",
     "prettier": "^3.0.0",
