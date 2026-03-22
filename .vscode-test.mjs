@@ -18,7 +18,7 @@
 import { defineConfig } from '@vscode/test-cli';
 
 export default defineConfig({
-  files: 'out-test/integration/**/*.test.js',
+  files: 'out-test/test/integration/**/*.test.js',
 
   // Open an empty workspace folder so VSCode starts cleanly. The extension
   // does not auto-activate here (no .jj/) but tests force-activate it via
@@ -27,6 +27,5 @@ export default defineConfig({
 
   mocha: {
     timeout: 30_000,
-    ui: 'bdd',
   },
 });

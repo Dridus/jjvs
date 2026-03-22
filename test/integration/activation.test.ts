@@ -31,7 +31,7 @@ suite('Extension Activation', function () {
   // Activation can take a few seconds — bump the mocha timeout.
   this.timeout(30_000);
 
-  before(async function () {
+  setup(async function () {
     // The extension ID is {publisher}.{name} per the extension manifest.
     const ext = vscode.extensions.getExtension('jjvs.jjvs');
     if (ext === undefined) {

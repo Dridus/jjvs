@@ -727,6 +727,7 @@
     "esbuild": "^0.25.0",
     "esbuild-svelte": "^0.9.0",
     "eslint": "^10.1.0",
+    "mocha": "^10.2.0",
     "prettier": "^3.0.0",
     "svelte": "^5.0.0",
     "typescript": "^5.7.0",

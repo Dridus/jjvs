@@ -26,7 +26,7 @@ suite('Repository — end-to-end against real jj', function () {
   let repo: TempJjRepo;
   let cli: JjCliImpl;
 
-  before(function () {
+  setup(function () {
     if (!isJjAvailable()) {
       this.skip();
       return;
@@ -35,7 +35,7 @@ suite('Repository — end-to-end against real jj', function () {
     cli = new JjCliImpl(new JjRunnerImpl({ jjPath: 'jj', workingDirectory: repo.rootPath }));
   });
 
-  after(function () {
+  teardown(function () {
     repo?.cleanup();
   });
 

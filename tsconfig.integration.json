@@ -10,7 +10,7 @@
   // mocha can require() directly from out-test/.
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "out-test",
     "types": ["node", "mocha"],
@@ -19,5 +19,5 @@
     "allowImportingTsExtensions": false
   },
   "include": ["src/**/*.ts", "test/integration/**/*.ts"],
-  "exclude": ["node_modules", "dist", "out", "webview-ui", "test/unit"]
+  "exclude": ["node_modules", "dist", "out", "webview-ui", "test/unit", ".vscode-test"]
 }

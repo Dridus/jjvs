@@ -73,7 +73,7 @@ suite('Extension Manifest', function () {
   let commands: ManifestCommand[];
   let commandIds: Set<string>;
 
-  before(function () {
+  setup(function () {
     pkg = getExtensionManifest();
     const contributes = pkg['contributes'] as Record<string, unknown>;
     commands = contributes['commands'] as ManifestCommand[];

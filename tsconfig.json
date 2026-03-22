@@ -3,8 +3,8 @@
     // Modern TypeScript for bundler-based projects (esbuild handles actual module resolution)
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "target": "ES2022",
-    "lib": ["ES2022"],
+    "target": "ES2024",
+    "lib": ["ES2024"],
 
     // Strict type checking
     "strict": true,
